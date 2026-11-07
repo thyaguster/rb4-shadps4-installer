@@ -85,10 +85,12 @@ To produce the portable ZIP and Setup executable, install Inno Setup 6 and run:
 .\packaging\build-release.ps1
 ```
 
-GitHub Actions builds every push. Pushing a version tag such as `v0.8.4` automatically publishes a release with the portable ZIP, Setup executable, release notes, and SHA-256 checksums.
+GitHub Actions builds every push. Pushing a version tag such as `v0.8.5` automatically publishes a release with the portable ZIP, Setup executable, release notes, and SHA-256 checksums.
 
 ## Credits and license
 
 This installer builds on work by the shadPS4, LlysiX, mothership-q, MiloHax/RB4DX, AzaharPlus, LibForge, Onyx, and wider rhythm-game communities. See [Third-party notices](THIRD_PARTY_NOTICES.md) and the in-app Credits page for links and attribution.
 
 Released under the [MIT License](LICENSE). Third-party downloads retain their own licenses and ownership.
+
+The high-resolution application and tray masters, multi-resolution Windows icon, and 32px tray asset are available under `Assets/`.
