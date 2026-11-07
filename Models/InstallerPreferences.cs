@@ -1,0 +1,18 @@
+namespace RB4ShadPS4Installer.Models;
+
+public sealed record InstallerPreferences(
+    string? ShadPs4Directory,
+    string? UserDirectory,
+    string? GameLibrary,
+    string? AddonDirectory,
+    string? PackageExtractor,
+    string? TitleId,
+    bool MaintainLauncherShortcut = false,
+    bool MaintainGameShortcut = false);
+
+public sealed record InstalledGame(
+    string TitleId,
+    string GameLibrary,
+    bool DeluxeInstalled,
+    string? Version,
+    int AddonCount);

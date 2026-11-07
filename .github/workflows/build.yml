@@ -1,0 +1,38 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore RB4ShadPS4Installer.csproj
+
+      - name: Build
+        run: dotnet build RB4ShadPS4Installer.csproj -c Release --no-restore
+
+      - name: Publish portable executable
+        run: dotnet publish RB4ShadPS4Installer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -o artifacts/portable
+
+      - name: Upload portable build
+        uses: actions/upload-artifact@v4
+        with:
+          name: RB4ShadPS4Installer-win-x64
+          path: artifacts/portable/RB4ShadPS4Installer.exe
+          if-no-files-found: error

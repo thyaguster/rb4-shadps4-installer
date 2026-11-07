@@ -1,0 +1,68 @@
+<Window x:Class="RB4ShadPS4Installer.CompletionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Ready to rock" Width="650" Height="310"
+        ResizeMode="NoResize" WindowStartupLocation="CenterOwner"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ShowInTaskbar="False">
+    <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource SuccessBrush}"
+            BorderThickness="1" CornerRadius="14">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="58" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="70" />
+            </Grid.RowDefinitions>
+
+            <Border Background="#1B202A" CornerRadius="14,14,0,0" MouseLeftButtonDown="DragHeader">
+                <Grid Margin="18,0,12,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="34" Height="34" CornerRadius="10" Background="{StaticResource AccentBrush}">
+                        <TextBlock Text="RB" FontWeight="Black" FontSize="13"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Grid.Column="1" Text="RB4 shadPS4 Installer" FontWeight="SemiBold"
+                               FontSize="15" VerticalAlignment="Center" Margin="12,0,0,0" />
+                    <Button Grid.Column="2" Content="×" Width="36" Height="36" FontSize="22"
+                            Background="Transparent" BorderThickness="0" Foreground="{StaticResource MutedTextBrush}"
+                            Cursor="Hand" Click="CloseDialog" />
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="1" Margin="30,24,30,18">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="62" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Width="50" Height="50" CornerRadius="25" Background="{StaticResource SuccessPanelBrush}"
+                        BorderBrush="{StaticResource SuccessBorderBrush}" BorderThickness="1" VerticalAlignment="Top">
+                    <TextBlock Text="✓" Foreground="{StaticResource SuccessBrush}" FontSize="28" FontWeight="Bold"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                    <TextBlock Text="Installation complete" FontSize="24" FontWeight="Bold" />
+                    <TextBlock x:Name="MessageText" Margin="0,8,0,0" FontSize="13"
+                               Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" />
+                    <TextBlock x:Name="ErrorText" Margin="0,8,0,0" FontSize="12" Foreground="#F07A8F"
+                               TextWrapping="Wrap" Visibility="Collapsed" />
+                </StackPanel>
+            </Grid>
+
+            <Border Grid.Row="2" Background="#11151C" CornerRadius="0,0,14,14"
+                    BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,1,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="30,0">
+                    <Button x:Name="OpenGameFolderButton" Content="Open game folder" Style="{StaticResource SecondaryButton}"
+                            Click="OpenGameFolder" />
+                    <Button x:Name="LaunchShadPs4Button" Content="Launch shadPS4" Style="{StaticResource PrimaryButton}"
+                            Margin="9,0,0,0" Click="LaunchShadPs4" />
+                    <Button Content="Done" Style="{StaticResource SecondaryButton}" Width="100"
+                            Margin="9,0,0,0" IsDefault="True" Click="CloseDialog" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

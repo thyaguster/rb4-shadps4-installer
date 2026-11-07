@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>RB4ShadPS4Installer</AssemblyName>
+    <RootNamespace>RB4ShadPS4Installer</RootNamespace>
+    <Product>RB4 shadPS4 Installer</Product>
+    <Title>RB4 shadPS4 Installer</Title>
+    <AssemblyTitle>RB4 shadPS4 Installer</AssemblyTitle>
+    <Company>RB4 shadPS4 Installer contributors</Company>
+    <Description>Installs user-provided Rock Band 4 game files, updates, Deluxe, DLC, and custom songs for shadPS4.</Description>
+    <Authors>RB4 shadPS4 Installer contributors</Authors>
+    <Copyright>Copyright © 2026 RB4 shadPS4 Installer contributors</Copyright>
+    <NeutralLanguage>en</NeutralLanguage>
+    <ApplicationIcon Condition="Exists('Assets/app.ico')">Assets/app.ico</ApplicationIcon>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <Version>0.8.2</Version>
+    <FileVersion>0.8.2.0</FileVersion>
+    <AssemblyVersion>0.8.2.0</AssemblyVersion>
+    <InformationalVersion>0.8.2</InformationalVersion>
+  </PropertyGroup>
+</Project>

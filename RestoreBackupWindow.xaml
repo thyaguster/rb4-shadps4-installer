@@ -1,0 +1,44 @@
+<Window x:Class="RB4ShadPS4Installer.RestoreBackupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Restore backup" Width="540" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" WindowStyle="None" AllowsTransparency="True"
+        Background="Transparent" ShowInTaskbar="False">
+    <Border Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource AccentBrush}"
+            BorderThickness="1" CornerRadius="14">
+        <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="58" /><RowDefinition Height="*" /><RowDefinition Height="76" /></Grid.RowDefinitions>
+            <Border Background="#1B202A" CornerRadius="14,14,0,0" MouseLeftButtonDown="DragHeader">
+                <Grid Margin="18,0,12,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <TextBlock Text="Restore installation backup" FontWeight="SemiBold" FontSize="15" VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Content="×" Width="36" Height="36" FontSize="22" Background="Transparent"
+                            BorderThickness="0" Foreground="{StaticResource MutedTextBrush}" Click="CancelRestore" />
+                </Grid>
+            </Border>
+            <StackPanel Grid.Row="1" Margin="30,24,30,24">
+                <TextBlock Text="Restore this backup?" FontSize="24" FontWeight="Bold" />
+                <TextBlock Text="Close shadPS4 before continuing. Current versions of affected files will be protected while the restore runs."
+                           Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,7,0,18" />
+                <Border Background="#10141B" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="9" Padding="15">
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="105" /><ColumnDefinition /></Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition /><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
+                        <TextBlock Text="Game" Foreground="{StaticResource MutedTextBrush}" />
+                        <TextBlock x:Name="TitleText" Grid.Column="1" />
+                        <TextBlock Grid.Row="1" Text="Created" Foreground="{StaticResource MutedTextBrush}" Margin="0,10,0,0" />
+                        <TextBlock x:Name="CreatedText" Grid.Row="1" Grid.Column="1" Margin="0,10,0,0" />
+                        <TextBlock Grid.Row="2" Text="Affected files" Foreground="{StaticResource MutedTextBrush}" Margin="0,10,0,0" />
+                        <TextBlock x:Name="FileCountText" Grid.Row="2" Grid.Column="1" Margin="0,10,0,0" />
+                    </Grid>
+                </Border>
+            </StackPanel>
+            <Border Grid.Row="2" Background="#11151C" CornerRadius="0,0,14,14" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,1,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="30,0">
+                    <Button Content="Cancel" Style="{StaticResource SecondaryButton}" Width="100" IsCancel="True" Click="CancelRestore" />
+                    <Button Content="Restore backup" Style="{StaticResource PrimaryButton}" Width="145" Margin="10,0,0,0" IsDefault="True" Click="ConfirmRestore" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

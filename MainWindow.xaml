@@ -1,0 +1,440 @@
+<Window x:Class="RB4ShadPS4Installer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="RB4 shadPS4 Installer" Width="980" Height="720" MinWidth="820" MinHeight="620"
+        WindowStartupLocation="CenterScreen" Background="{StaticResource BackgroundBrush}">
+    <Grid Background="{StaticResource BackgroundBrush}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="245" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Background="#10131A" BorderBrush="#242A35" BorderThickness="0,0,1,0">
+            <Grid Margin="26,30">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <StackPanel>
+                    <Border Width="58" Height="58" CornerRadius="16" Background="{StaticResource AccentBrush}" HorizontalAlignment="Left">
+                        <TextBlock Text="RB" FontWeight="Black" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="ROCK BAND 4" FontSize="20" FontWeight="Bold" Margin="0,16,0,2" />
+                    <TextBlock Text="shadPS4 Installer" Foreground="{StaticResource MutedTextBrush}" FontSize="14" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="1" Margin="0,44,0,0">
+                    <TextBlock Text="1   SETUP" FontWeight="SemiBold" Margin="0,0,0,20" />
+                    <TextBlock Text="2   REVIEW" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,20" />
+                    <TextBlock Text="3   INSTALL" Foreground="{StaticResource MutedTextBrush}" />
+                </StackPanel>
+
+                <Border Grid.Row="3" Padding="14" Background="#181D26" CornerRadius="8">
+                    <StackPanel>
+                        <TextBlock Text="SUPPORTED" FontSize="11" Foreground="{StaticResource MutedTextBrush}" />
+                        <TextBlock Text="CUSA02084  •  USA" FontSize="12" Margin="0,8,0,3" />
+                        <TextBlock Text="CUSA02901  •  EU" FontSize="12" />
+                        <TextBlock x:Name="AppVersionText" Foreground="{StaticResource MutedTextBrush}" FontSize="10" Margin="0,11,0,0" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Column="1" Margin="38,28,38,24" Background="{StaticResource BackgroundBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Install Rock Band 4" FontSize="30" FontWeight="Bold" />
+                    <TextBlock Text="Set up the standard game or add RB4 Deluxe to an existing shadPS4 library."
+                               Foreground="{StaticResource MutedTextBrush}" Margin="0,7,0,0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="CreditsButton" Content="♥  Credits" Style="{StaticResource SecondaryButton}"
+                            Margin="0,0,8,0" Click="ToggleCredits" />
+                    <Button x:Name="SettingsButton" Content="⚙  Settings" Style="{StaticResource SecondaryButton}"
+                            Click="ToggleSettings" />
+                </StackPanel>
+            </Grid>
+
+            <ScrollViewer x:Name="MainScrollViewer" Grid.Row="1" Margin="0,24,0,20" VerticalScrollBarVisibility="Auto" Background="{StaticResource BackgroundBrush}">
+                <StackPanel Margin="0,0,16,0">
+                    <Border x:Name="CreditsPanel" Background="{StaticResource PanelBrush}"
+                            BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1"
+                            CornerRadius="12" Padding="24" Visibility="Collapsed">
+                        <StackPanel>
+                            <Grid>
+                                <StackPanel>
+                                    <TextBlock Text="Credits &amp; thanks" FontSize="26" FontWeight="Bold" />
+                                    <TextBlock Text="This installer stands on the work of an incredible rhythm-game and emulation community."
+                                               Foreground="{StaticResource MutedTextBrush}" Margin="0,5,0,0" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Border Background="{StaticResource SuccessPanelBrush}" BorderBrush="{StaticResource SuccessBorderBrush}"
+                                    BorderThickness="1" CornerRadius="9" Padding="15" Margin="0,20,0,14">
+                                <TextBlock Text="Thank you to every developer, researcher, musician, charter, tester, and community member who keeps Rock Band and game preservation alive. This installer would not exist without your work."
+                                           TextWrapping="Wrap" LineHeight="20" />
+                            </Border>
+
+                            <Border Background="#10141B" CornerRadius="9" Padding="15" Margin="0,0,0,9">
+                                <StackPanel>
+                                    <TextBlock Text="shadPS4 Emulator Project" FontWeight="SemiBold" FontSize="15" />
+                                    <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0">PlayStation 4 emulator and official Qt launcher.  <Hyperlink NavigateUri="https://github.com/shadps4-emu/shadPS4" RequestNavigate="OpenLink">Project &amp; contributors ↗</Hyperlink></TextBlock>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#10141B" CornerRadius="9" Padding="15" Margin="0,0,0,9">
+                                <StackPanel>
+                                    <TextBlock Text="LlysiX &amp; mothership-q — RB4 compatibility" FontWeight="SemiBold" FontSize="15" />
+                                    <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0" TextWrapping="Wrap">LlysiX maintains the RB4-focused launcher and tested emulator build; mothership-q contributed the upstream shader fix that makes this build suitable for Rock Band 4.  <Hyperlink NavigateUri="https://github.com/LlysiX/shadps4-rb4-qtlauncher" RequestNavigate="OpenLink">RB4 launcher ↗</Hyperlink>  <Hyperlink NavigateUri="https://github.com/LlysiX/shadPS4" RequestNavigate="OpenLink">Emulator fork ↗</Hyperlink>  <Hyperlink NavigateUri="https://github.com/shadps4-emu/shadPS4/commit/36d30e77095612b0dc9ee5da13ec927a1da749ad" RequestNavigate="OpenLink">Shader fix ↗</Hyperlink></TextBlock>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#10141B" CornerRadius="9" Padding="15" Margin="0,0,0,9">
+                                <StackPanel>
+                                    <TextBlock Text="MiloHax — Rock Band 4 Deluxe" FontWeight="SemiBold" FontSize="15" />
+                                    <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0">Deluxe enhancements, plugin, documentation, and community support.  <Hyperlink NavigateUri="https://github.com/hmxmilohax/Rock-Band-4-Deluxe" RequestNavigate="OpenLink">Source ↗</Hyperlink>  <Hyperlink NavigateUri="https://rb4dx.milohax.org/" RequestNavigate="OpenLink">Website ↗</Hyperlink></TextBlock>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#10141B" CornerRadius="9" Padding="15" Margin="0,0,0,9">
+                                <StackPanel>
+                                    <TextBlock Text="AzaharPlus — shadPS4Plus PKG Extractor" FontWeight="SemiBold" FontSize="15" />
+                                    <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0">Standalone command-line PKG extraction used by this installer.  <Hyperlink NavigateUri="https://github.com/AzaharPlus/shadPS4Plus" RequestNavigate="OpenLink">Project &amp; contributors ↗</Hyperlink></TextBlock>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#10141B" CornerRadius="9" Padding="15" Margin="0,0,0,9">
+                                <StackPanel>
+                                    <TextBlock Text="mtolly, Maxton &amp; contributors — LibForge / ForgeTool" FontWeight="SemiBold" FontSize="15" />
+                                    <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0">Tools and research for creating Rock Band 4 custom content.  <Hyperlink NavigateUri="https://github.com/mtolly/LibForge" RequestNavigate="OpenLink">Project &amp; contributors ↗</Hyperlink></TextBlock>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#10141B" CornerRadius="9" Padding="15" Margin="0,0,0,9">
+                                <StackPanel>
+                                    <TextBlock Text="mtolly &amp; contributors — Onyx Music Game Toolkit" FontWeight="SemiBold" FontSize="15" />
+                                    <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0">Song conversion and build tooling for Rock Band and other rhythm games.  <Hyperlink NavigateUri="https://github.com/mtolly/onyx" RequestNavigate="OpenLink">Project &amp; contributors ↗</Hyperlink></TextBlock>
+                                </StackPanel>
+                            </Border>
+                            <Border Background="#10141B" CornerRadius="9" Padding="15">
+                                <StackPanel>
+                                    <TextBlock Text="Harmonix Music Systems" FontWeight="SemiBold" FontSize="15" />
+                                    <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0">Original creators of Rock Band 4 and the Rock Band series.  <Hyperlink NavigateUri="https://www.harmonixmusic.com/games/rock-band/rb4/" RequestNavigate="OpenLink">Rock Band 4 ↗</Hyperlink></TextBlock>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="FirstRunPanel" Background="{StaticResource SuccessPanelBrush}"
+                            BorderBrush="{StaticResource SuccessBorderBrush}" BorderThickness="1"
+                            CornerRadius="10" Padding="18" Margin="0,0,0,14" Visibility="Collapsed">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="First-time setup" FontWeight="Bold" FontSize="18" />
+                                <TextBlock Text="Review the paths below, make any changes you need, then continue."
+                                           Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,5,18,0" />
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Save paths &amp; continue" Style="{StaticResource PrimaryButton}"
+                                    VerticalAlignment="Center" Click="FinishFirstRun" />
+                        </Grid>
+                    </Border>
+
+                    <Border x:Name="EditionPanel" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="18">
+                        <StackPanel>
+                            <TextBlock Text="Edition" FontWeight="SemiBold" FontSize="15" />
+                            <Grid x:Name="EditionOptionsGrid" Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition /><ColumnDefinition /></Grid.ColumnDefinitions>
+                                <RadioButton x:Name="StandardModeRadio" GroupName="Mode" IsChecked="True" Checked="ModeChanged">
+                                    <StackPanel Margin="7,0,14,0">
+                                        <TextBlock Text="Standard RB4" FontWeight="SemiBold" />
+                                        <TextBlock Text="Install the base game and optional update" Foreground="{StaticResource MutedTextBrush}" FontSize="12" />
+                                    </StackPanel>
+                                </RadioButton>
+                                <RadioButton x:Name="DeluxeModeRadio" Grid.Column="1" GroupName="Mode" Checked="ModeChanged">
+                                    <StackPanel Margin="7,0,14,0">
+                                        <TextBlock x:Name="DeluxeModeTitle" Text="RB4 Deluxe" FontWeight="SemiBold" />
+                                        <TextBlock x:Name="DeluxeModeDescription" Text="Install or repair the Deluxe mod" Foreground="{StaticResource MutedTextBrush}" FontSize="12" />
+                                    </StackPanel>
+                                </RadioButton>
+                                <RadioButton x:Name="ContentModeRadio" Grid.Column="2" GroupName="Mode" Checked="ModeChanged">
+                                    <StackPanel Margin="7,0,0,0">
+                                        <TextBlock Text="Add content later" FontWeight="SemiBold" />
+                                        <TextBlock Text="Updates, DLC and custom songs" Foreground="{StaticResource MutedTextBrush}" FontSize="12" />
+                                    </StackPanel>
+                                </RadioButton>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="DetectedInstallPanel" Background="{StaticResource SuccessPanelBrush}"
+                            BorderBrush="{StaticResource SuccessBorderBrush}" BorderThickness="1"
+                            CornerRadius="10" Padding="15" Margin="0,14,0,0" Visibility="Collapsed">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="✓" Foreground="{StaticResource SuccessBrush}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
+                            <StackPanel Grid.Column="1" Margin="12,0">
+                                <TextBlock x:Name="DetectedInstallTitle" Text="Existing Rock Band 4 installation detected" FontWeight="SemiBold" />
+                                <TextBlock x:Name="DetectedInstallText" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,3,0,0" />
+                                <TextBlock x:Name="DetectedInstallPathText" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,2,0,0"
+                                           TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                <Button x:Name="ShowGameUpdateButton" Content="Install game update" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Click="ShowGameUpdate" />
+                                <Button x:Name="ShowDeluxeUpdateButton" Content="Update or reinstall Deluxe" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Click="ShowDeluxeUpdate" />
+                            </StackPanel>
+                            <Button Grid.Column="3" Content="Change paths" Style="{StaticResource SecondaryButton}" Click="ChangeDetectedPaths" />
+                        </Grid>
+                    </Border>
+
+                    <Border x:Name="SettingsBanner" Background="#1A202A" BorderBrush="{StaticResource AccentBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,14,0,0" Visibility="Collapsed">
+                        <Grid>
+                            <StackPanel>
+                                <TextBlock Text="Installer settings" FontSize="19" FontWeight="Bold" />
+                                <TextBlock Text="Change shadPS4, library, add-on, and extraction-tool locations."
+                                           Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border x:Name="LocationsPanel" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,14,0,0">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock Text="shadPS4 locations" FontWeight="SemiBold" FontSize="15" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Content="Reset saved paths" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Click="ResetSavedPaths" />
+                                    <Button Content="Detect installed RB4" Style="{StaticResource SecondaryButton}" Click="DetectInstalledGame" />
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Text="shadPS4 application folder" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,14,0,5" />
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBox x:Name="ShadPs4InstallText" />
+                                <Button Grid.Column="1" Content="Select existing" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="SelectExistingShadPs4" />
+                                <Button Grid.Column="2" Content="Use managed" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="UseManagedShadPs4" />
+                            </Grid>
+                            <TextBlock x:Name="ShadPs4PathSourceText" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,5,0,0" />
+                            <TextBlock Text="Managed emulator downloads" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,13,0,5" />
+                            <StackPanel Orientation="Horizontal">
+                                <Button x:Name="DownloadRb4ShadPs4Button" Content="Download / update LlysiX RB4 build" Style="{StaticResource PrimaryButton}" Click="DownloadRb4ShadPs4"
+                                        ToolTip="Recommended for Rock Band 4: checks LlysiX's releases for the latest combined Windows build and verifies its SHA-256 digest" />
+                                <Button x:Name="DownloadShadPs4Button" Content="Download latest official" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="DownloadShadPs4"
+                                        ToolTip="Downloads the newest official shadPS4 Windows x64 release to its own installer-managed folder" />
+                            </StackPanel>
+                            <TextBlock Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
+                                LlysiX's custom build is the recommended RB4-focused option. The official channel provides the standard latest shadPS4 release. Both check GitHub for updates, verify available SHA-256 digests, and use separate managed folders.
+                            </TextBlock>
+                            <TextBlock Text="User folder" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,12,0,5" />
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBox x:Name="UserDirectoryText" TextChanged="UserDirectoryChanged" />
+                                <Button Grid.Column="1" Content="Browse" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="BrowseUserDirectory" />
+                            </Grid>
+                            <TextBlock Text="Game library" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,12,0,5" />
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBox x:Name="GameLibraryText" />
+                                <Button Grid.Column="1" Content="Browse" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="BrowseGameLibrary" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="GameFilesPanel" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,14,0,0">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock x:Name="GameFilesTitle" Text="Game files" FontWeight="SemiBold" FontSize="15" VerticalAlignment="Center" />
+                                <StackPanel x:Name="RegionPanel" Grid.Column="1" Orientation="Horizontal">
+                                    <RadioButton x:Name="UsaTitleRadio" Content="USA  CUSA02084" GroupName="Region" IsChecked="True" Margin="0,0,16,0" />
+                                    <RadioButton x:Name="EuTitleRadio" Content="EU  CUSA02901" GroupName="Region" />
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel x:Name="BaseSourcePanel">
+                                <TextBlock Text="Base-game PKG or extracted folder — browse or drop it here" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,14,0,5" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                    <TextBox x:Name="BaseSourceText" Tag="pkg" AllowDrop="True"
+                                             PreviewDragOver="SourceDragOver" Drop="DropSource" ToolTip="Drop one base-game PKG or extracted folder here" />
+                                    <Button Grid.Column="1" Content="PKG" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="BrowseBasePackage" />
+                                    <Button Grid.Column="2" Content="Folder" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="BrowseBaseSource" />
+                                </Grid>
+                            </StackPanel>
+                            <TextBlock Text="Game update PKG or extracted folder — browse or drop it here" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,12,0,5" />
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBox x:Name="PatchSourceText" Tag="pkg" AllowDrop="True"
+                                         PreviewDragOver="SourceDragOver" Drop="DropSource" ToolTip="Drop one update PKG or extracted folder here" />
+                                <Button Grid.Column="1" Content="PKG" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="BrowsePatchPackage" />
+                                <Button Grid.Column="2" Content="Folder" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="BrowsePatchSource" />
+                            </Grid>
+                            <StackPanel x:Name="DeluxeSourcePanel" Visibility="Collapsed">
+                                <TextBlock Text="RB4 Deluxe ZIP or extracted folder — browse or drop it here" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,12,0,5" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                    <TextBox x:Name="DeluxeSourceText" Tag="zip" AllowDrop="True"
+                                             PreviewDragOver="SourceDragOver" Drop="DropSource" ToolTip="Drop one RB4 Deluxe ZIP or extracted folder here" />
+                                    <Button Grid.Column="1" Content="ZIP" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="BrowseDeluxeZip" />
+                                    <Button Grid.Column="2" Content="Folder" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="BrowseDeluxeFolder" />
+                                    <Button x:Name="DownloadDeluxeButton" Grid.Column="3" Content="Download latest build" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="DownloadDeluxe" />
+                                </Grid>
+                                <TextBlock Text="Official source: latest successful PS4 build from the RB4DX main branch."
+                                           Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,5,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="DeluxeMaintenancePanel" Background="{StaticResource PanelBrush}"
+                            BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1"
+                            CornerRadius="10" Padding="18" Margin="0,14,0,0" Visibility="Collapsed">
+                        <StackPanel>
+                            <TextBlock Text="RB4 Deluxe maintenance" FontWeight="SemiBold" FontSize="15" />
+                            <TextBlock Text="Deluxe is already installed. Its source fields stay hidden until you choose to update or reinstall it."
+                                       Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,5,0,14" TextWrapping="Wrap" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Text="Installed game" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,12,9" />
+                                <TextBlock x:Name="DeluxeMaintenanceGameText" Grid.Column="1" FontSize="12" Margin="0,0,0,9" />
+                                <TextBlock Grid.Row="1" Text="Repair target" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,12,9" />
+                                <TextBlock x:Name="DeluxeMaintenanceTargetText" Grid.Row="1" Grid.Column="1" FontSize="12" Margin="0,0,0,9"
+                                           TextTrimming="CharacterEllipsis" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" />
+                                <TextBlock Grid.Row="2" Text="Existing content" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,12,0" />
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="DLC and custom songs are preserved" FontSize="12" Foreground="{StaticResource SuccessBrush}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="ExtractorPanel" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,14,0,0">
+                        <StackPanel>
+                            <TextBlock Text="PKG extraction tool" FontWeight="SemiBold" FontSize="15" />
+                            <TextBlock Text="Uses the pinned, SHA-256-verified shadPS4Plus pkg_extractor 1.1. It is only required for .pkg sources."
+                                       Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,5,0,10" TextWrapping="Wrap" />
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBox x:Name="PackageExtractorText" />
+                                <Button Grid.Column="1" Content="Browse" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="BrowsePackageExtractor" />
+                                <Button x:Name="DownloadExtractorButton" Grid.Column="2" Content="Download verified 1.1" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="DownloadPackageExtractor" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="ShortcutPanel" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource PanelBorderBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,14,0,0" Visibility="Collapsed">
+                        <StackPanel>
+                            <TextBlock Text="Desktop shortcuts" FontWeight="SemiBold" FontSize="15" />
+                            <TextBlock Text="Create shortcuts using the selected shadPS4 installation. Enabled shortcuts are refreshed after emulator or game updates."
+                                       Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,5,0,12" TextWrapping="Wrap" />
+                            <CheckBox x:Name="LauncherShortcutCheck" Content="RB4 shadPS4 launcher shortcut" Margin="0,0,0,9" />
+                            <CheckBox x:Name="GameShortcutCheck" Content="Launch Rock Band 4 directly" Margin="0,0,0,5" />
+                            <TextBlock Text="Direct launch uses the detected USA or EU installation and the command-line mode supported by the selected launcher."
+                                       Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="22,0,0,12" TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="Open Desktop" Style="{StaticResource SecondaryButton}" Click="OpenDesktopFolder" />
+                                <Button Content="Create / refresh selected" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" Click="CreateDesktopShortcuts" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="BackupPanel" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource PanelBorderBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,14,0,0" Visibility="Collapsed">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock Text="Recovery backups" FontWeight="SemiBold" FontSize="15" VerticalAlignment="Center" />
+                                <Button Grid.Column="1" Content="Refresh" Style="{StaticResource SecondaryButton}" Click="RefreshBackups" />
+                            </Grid>
+                            <TextBlock Text="Backups retained after successful installations can restore every file changed by that installation."
+                                       Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,5,0,12" TextWrapping="Wrap" />
+                            <ListBox x:Name="BackupsList" Height="145" Background="#10141B" BorderBrush="{StaticResource PanelBorderBrush}"
+                                     SelectionChanged="BackupSelectionChanged" HorizontalContentAlignment="Stretch">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="6,5">
+                                            <TextBlock Text="{Binding DisplayTitle}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding DisplayDetails}" Foreground="{StaticResource MutedTextBrush}" FontSize="11"
+                                                       Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <TextBlock x:Name="NoBackupsText" Text="No recovery backups found. Complete an installation with backup retention enabled."
+                                       Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,9,0,0" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                                <Button x:Name="OpenBackupFolderButton" Content="Open folder" Style="{StaticResource SecondaryButton}"
+                                        IsEnabled="False" Click="OpenBackupFolder" />
+                                <Button x:Name="DeleteBackupButton" Content="Delete selected" Style="{StaticResource SecondaryButton}"
+                                        IsEnabled="False" Margin="8,0,0,0" Click="DeleteSelectedBackup" />
+                                <Button x:Name="RestoreLatestBackupButton" Content="Restore selected" Style="{StaticResource PrimaryButton}"
+                                        IsEnabled="False" Margin="8,0,0,0" Click="RestoreLatestBackup" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="AddonPanel" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,14,0,0">
+                        <StackPanel>
+                            <TextBlock x:Name="AddonPanelTitle" Text="DLC &amp; custom songs" FontWeight="SemiBold" FontSize="15" />
+                            <TextBlock Text="Queue official DLC dumps or custom-song PKGs. Every item must target the selected RB4 region."
+                                       Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,5,0,10" TextWrapping="Wrap" />
+                            <TextBlock Text="Additional-content directory" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,0,5" />
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBox x:Name="AddonDirectoryText" />
+                                <Button Grid.Column="1" Content="Browse" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="BrowseAddonDirectory" />
+                            </Grid>
+                            <ListBox x:Name="AddonSourcesList" Height="112" Margin="0,10,0,0" Background="#0F1219"
+                                     Foreground="{StaticResource TextBrush}" BorderBrush="{StaticResource PanelBorderBrush}"
+                                     SelectionMode="Extended" HorizontalContentAlignment="Stretch"
+                                     AllowDrop="True" PreviewDragOver="AddonDragOver" Drop="DropAddons"
+                                     ToolTip="Drop one or more DLC/custom-song PKGs or extracted folders here" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,9,0,0">
+                                <Button Content="Add PKGs" Style="{StaticResource SecondaryButton}" Click="AddAddonPackages" />
+                                <Button Content="Add folder" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="AddAddonFolder" />
+                                <Button Content="Remove selected" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="RemoveAddonSources" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <CheckBox x:Name="BackupCheck" Content="Keep backup files after successful installation (failed installs roll back automatically)"
+                              IsChecked="True" Margin="4,16,0,0" />
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Row="2" Background="{StaticResource BackgroundBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,1,0,0" Padding="0,14,0,0">
+                <StackPanel>
+                    <Border x:Name="StatusPanel" Background="#151922" BorderBrush="#292F3C" BorderThickness="1" CornerRadius="8" Padding="11" Margin="0,0,0,10" Visibility="Collapsed">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock x:Name="StatusText" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="44" VerticalAlignment="Center" />
+                            <StackPanel x:Name="StatusActionsPanel" Grid.Column="1" Orientation="Horizontal" Margin="12,0,0,0" Visibility="Collapsed">
+                                <Button x:Name="OpenLogButton" Content="Open log" Style="{StaticResource SecondaryButton}" Visibility="Collapsed" Click="OpenInstallLog" />
+                                <Button x:Name="CopyErrorButton" Content="Copy error" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Visibility="Collapsed" Click="CopyErrorDetails" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <ProgressBar x:Name="InstallProgressBar" Minimum="0" Maximum="100" Margin="0,0,0,12" Visibility="Collapsed" />
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <TextBlock Text="Only use game files and DLC dumped from copies you own." Foreground="{StaticResource MutedTextBrush}" FontSize="12" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button x:Name="CancelButton" Content="Cancel" Style="{StaticResource SecondaryButton}" Visibility="Collapsed" Margin="0,0,9,0" Click="CancelInstall" />
+                            <Button x:Name="InstallButton" Content="Review &amp; Install" Style="{StaticResource PrimaryButton}" Click="StartInstall" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

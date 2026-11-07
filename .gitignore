@@ -1,0 +1,29 @@
+# .NET build output
+[Bb]in/
+[Oo]bj/
+publish/
+publish-*/
+release-*/
+
+# IDE and user-specific state
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Local tools, packages, logs, and temporary files
+tools/
+*.log
+*.tmp
+*.zip
+*.nupkg
+TestResults/
+artifacts/
+
+# OS metadata
+Thumbs.db
+Desktop.ini
+.DS_Store
