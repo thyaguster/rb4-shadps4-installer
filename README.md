@@ -36,7 +36,7 @@
 |---|---|
 | **Game setup** | Base game and updates from user-provided PKGs or extracted folders |
 | **RB4 Deluxe** | Download, install, detect, repair, and update |
-| **Extra content** | Multiple DLC and custom-song PKGs or extracted folders |
+| **Extra content** | Individual PKGs, recursively scanned PKG folders, or extracted add-on folders |
 | **shadPS4** | Recommended LlysiX RB4 build or the latest official release |
 | **Existing installs** | Detects region, game version, Deluxe, and installed add-ons |
 | **Safety** | SHA-256 checks, validation, backups, rollback, and install logs |
@@ -57,6 +57,8 @@ Supported game regions:
 
 Already have RB4 installed? The app detects it and opens directly in content-management mode for updates, Deluxe, DLC, and custom songs.
 
+For large DLC/custom-song collections, choose **Add PKG folder**. The installer scans the selected folder and its subfolders, then queues every `.pkg` it finds. The separate **Add extracted folder** button is only for content that has already been unpacked.
+
 For detailed instructions, path explanations, maintenance workflows, and troubleshooting, see the [project Wiki](https://github.com/thyaguster/rb4-shadps4-installer/wiki).
 
 ## Screenshots
@@ -67,7 +69,8 @@ For detailed instructions, path explanations, maintenance workflows, and trouble
     <td width="50%"><img src="docs/screenshots/credits.png" alt="Credits page"><br><strong>Credits and original-project links</strong></td>
   </tr>
   <tr>
-    <td colspan="2"><img src="docs/screenshots/updates.png" alt="Application update settings"><br><strong>Verified automatic and manual application updates</strong></td>
+    <td width="50%"><img src="docs/screenshots/content.png" alt="DLC and custom-song source selection"><br><strong>Individual PKGs, PKG folders, and extracted content</strong></td>
+    <td width="50%"><img src="docs/screenshots/updates.png" alt="Application update settings"><br><strong>Verified automatic and manual application updates</strong></td>
   </tr>
 </table>
 

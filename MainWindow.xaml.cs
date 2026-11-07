@@ -478,7 +478,7 @@ public partial class MainWindow : Window
 
     private void BrowseAddonDirectory(object sender, RoutedEventArgs e)
     {
-        var value = PickFolder("Choose the shadPS4 additional-content folder", AddonDirectoryText.Text);
+        var value = PickFolder("Choose where extracted DLC and custom songs are installed", AddonDirectoryText.Text);
         if (value is not null) AddonDirectoryText.Text = value;
     }
 
@@ -526,9 +526,27 @@ public partial class MainWindow : Window
             Multiselect = true
         };
         if (dialog.ShowDialog() != true) return;
-        foreach (var file in dialog.FileNames)
-            if (!AddonSourcesList.Items.Cast<string>().Contains(file, StringComparer.OrdinalIgnoreCase))
-                AddonSourcesList.Items.Add(file);
+        var added = QueueAddonSources(dialog.FileNames);
+        ShowStatus($"Added {added} DLC/custom-song PKG{(added == 1 ? string.Empty : "s")} to the queue.", false, success: added > 0);
+    }
+
+    private void AddAddonPackageFolder(object sender, RoutedEventArgs e)
+    {
+        var folder = PickFolder("Choose a folder containing DLC or custom-song PKGs");
+        if (folder is null) return;
+        try
+        {
+            var packages = AddonPackageScanner.FindPackages(folder);
+            var added = QueueAddonSources(packages);
+            ShowStatus(packages.Count == 0
+                ? "No .pkg files were found in that folder or its subfolders."
+                : $"Found {packages.Count} PKG{(packages.Count == 1 ? string.Empty : "s")}; added {added} new item{(added == 1 ? string.Empty : "s")} to the queue.",
+                packages.Count == 0, success: packages.Count > 0);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ShowStatus("Could not scan that PKG folder: " + ex.Message, true);
+        }
     }
 
     private void AddAddonFolder(object sender, RoutedEventArgs e)
@@ -536,6 +554,18 @@ public partial class MainWindow : Window
         var folder = PickFolder("Choose an extracted DLC or custom-song folder");
         if (folder is not null && !AddonSourcesList.Items.Cast<string>().Contains(folder, StringComparer.OrdinalIgnoreCase))
             AddonSourcesList.Items.Add(folder);
+    }
+
+    private int QueueAddonSources(IEnumerable<string> sources)
+    {
+        var added = 0;
+        foreach (var source in sources)
+        {
+            if (AddonSourcesList.Items.Cast<string>().Contains(source, StringComparer.OrdinalIgnoreCase)) continue;
+            AddonSourcesList.Items.Add(source);
+            added++;
+        }
+        return added;
     }
 
     private void RemoveAddonSources(object sender, RoutedEventArgs e)

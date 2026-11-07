@@ -16,6 +16,8 @@ The installer remembers paths you explicitly saved. Use **Reset saved paths** in
 
 Confirm that the PKG matches the installed game's region and content type. Ensure the package extractor is configured. Corrupt, encrypted, unsupported, or mismatched packages cannot be installed.
 
+The **Add PKG folder** picker displays folders rather than individual files. Select the collection folder itself; after confirmation, the installer scans it and all subfolders for `.pkg` files and reports how many were queued.
+
 ## An update or add-on does not appear in shadPS4
 
 Restart shadPS4 after installation so it can rescan the library. Recheck the game library, user folder, and additional-content directory in Settings.

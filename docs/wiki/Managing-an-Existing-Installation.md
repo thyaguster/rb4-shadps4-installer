@@ -12,7 +12,13 @@ Choose **Repair RB4 Deluxe** or **Update or reinstall Deluxe**. You can select a
 
 ## Add DLC or custom songs
 
-Choose **Add content later**, then add one or more PKGs or extracted folders. Every item must match the installed game's region. The installer can process multiple queued items in one run.
+Choose **Add content later**, then use one of these source options:
+
+- **Add PKGs:** select one or more individual package files.
+- **Add PKG folder:** select a collection folder; the installer recursively finds and queues every `.pkg` inside it.
+- **Add extracted folder:** select one already-unpacked add-on folder.
+
+Every item must match the installed game's region. The installer can process multiple queued items in one run.
 
 ## Backups and rollback
 

@@ -19,9 +19,9 @@ The shadPS4 data folder containing emulator configuration and metadata. The norm
 
 The parent folder containing installed title directories such as `CUSA02084` or `CUSA02901`. The installer writes the base game and patch folders here.
 
-## Additional-content directory
+## DLC install location
 
-The shadPS4 add-on location used for DLC and custom songs. The installer normally derives it from the selected user folder.
+The destination where the installer places extracted DLC and custom songs. It is automatically derived from shadPS4's `addon_install_dir` configuration or its normal user-folder fallback. This destination is edited in Settings; it is separate from the PKG source folder selected with **Add PKG folder**.
 
 ## Package extractor
 
