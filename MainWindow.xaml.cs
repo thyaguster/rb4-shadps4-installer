@@ -851,7 +851,7 @@ public partial class MainWindow : Window
                     ? $"RB4-compatible shadPS4 {rb4Result.Version} downloaded, SHA-256 verified, and installed successfully."
                     : $"RB4-compatible shadPS4 is already up to date ({rb4Result.Version}).";
             if (rb4Compatible)
-                message += " It uses an isolated portable user profile beside the bundled emulator.";
+                message += " It uses an isolated portable user profile beside the LlysiX launcher.";
             if (rb4Result?.UsedPinnedFallback == true)
                 message += " The pinned known-good release was used because the latest release could not be verified.";
             ShowStatus(message, false, success: true);

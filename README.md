@@ -76,7 +76,7 @@ For detailed instructions, path explanations, maintenance workflows, and trouble
 
 ## Emulator choices
 
-- **LlysiX RB4 build — recommended:** an RB4-focused shadPS4 build containing the verified shader fix. It is kept independent from other shadPS4 installations and uses a portable `user` folder beside its bundled emulator. The installer checks GitHub for updates and verifies the release digest.
+- **LlysiX RB4 build — recommended:** an RB4-focused shadPS4 build containing the verified shader fix. It is kept independent from other shadPS4 installations and uses a portable `user` folder beside its launcher—the working directory used by this fork. The installer checks GitHub for updates and verifies the release digest.
 - **Latest official shadPS4:** the standard official Windows release, kept in a separate managed folder.
 
 When upgrading an older installer-managed LlysiX setup, configuration, saves, keys, input profiles, sysmodules, and RB4DX data are copied into the isolated profile. Existing files under `%APPDATA%\shadPS4` are not deleted. The game library remains in its original location and is not duplicated.
@@ -90,7 +90,7 @@ The app checks [GitHub Releases](https://github.com/thyaguster/rb4-shadps4-insta
 - **Setup edition:** downloads the verified Setup executable and opens it to update the installed copy.
 - **Portable edition:** downloads the verified Portable ZIP. After confirmation, a hidden one-time helper closes the running executable, places and starts the new version, removes the old executable, and then removes itself.
 
-Application updates do not replace game files or emulator binaries. Version 0.8.9 performs a one-time, non-destructive path migration for older installer-managed LlysiX profiles; the original AppData files remain available.
+Application updates do not replace game files or emulator binaries. Version 0.8.10 performs a one-time, non-destructive path migration for older installer-managed LlysiX profiles, including the temporary v0.8.9 layout; the original profile files remain available.
 
 ## Build from source
 

@@ -30,9 +30,11 @@ internal static class ManagedEmulatorProfile
 
     public static string GetPortableUserDirectory(string applicationDirectory)
     {
-        var emulator = FindBundledEmulator(applicationDirectory)
+        _ = FindBundledEmulator(applicationDirectory)
             ?? throw new FileNotFoundException("The managed LlysiX package does not contain emulator\\shadPS4.exe.");
-        return Path.Combine(Path.GetDirectoryName(emulator)!, "user");
+        // The RB4 fork resolves its portable folder from the launcher's working
+        // directory (std::filesystem::current_path), not the emulator EXE folder.
+        return Path.Combine(applicationDirectory, "user");
     }
 
     public static async Task<ProfileMigrationResult> PreparePortableUserAsync(

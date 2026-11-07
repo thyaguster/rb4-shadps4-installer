@@ -24,7 +24,7 @@ Restart shadPS4 after installation so it can rescan the library. Recheck the gam
 
 ## RB4DX installs but the game still looks unmodified
 
-The installer-managed LlysiX build must use its isolated portable profile. In Settings, the user folder should end in `emulator\user`, and RB4DX should be under `data\GoldHEN\RB4DX` inside that folder. The installer migrates older title-specific data automatically without deleting the original AppData profile.
+The installer-managed LlysiX build must use its isolated portable profile. In Settings, the user folder should be `user` beside `shadPS4QtLauncher.exe`, and RB4DX should be under `data\GoldHEN\RB4DX` inside it. The fork uses the launcher's working directory—not the nested emulator executable directory—to find portable data. The installer migrates older layouts automatically without deleting the original AppData profile.
 
 Standard user-selected shadPS4 installations keep their detected layout. The installer also checks both layouts when reporting whether Deluxe is installed.
 
