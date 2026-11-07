@@ -1,9 +1,9 @@
 # .NET build output
 [Bb]in/
 [Oo]bj/
-publish/
-publish-*/
-release-*/
+/publish/
+/publish-*/
+/release-*/
 
 # IDE and user-specific state
 .vs/
