@@ -1,7 +1,9 @@
 using System.Diagnostics;
+using System.Net.Http;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Navigation;
+using System.Text.Json;
 using Microsoft.Win32;
 using RB4ShadPS4Installer.Models;
 using RB4ShadPS4Installer.Services;
@@ -22,6 +24,9 @@ public partial class MainWindow : Window
     private InstallationLog? _installationLog;
     private string? _lastErrorDetails;
     private BackupInfo? _latestBackup;
+    private AppRelease? _latestAppRelease;
+    private bool _checkingForAppUpdates;
+    private bool _downloadingAppUpdate;
 
     public MainWindow()
     {
@@ -39,6 +44,9 @@ public partial class MainWindow : Window
         PackageExtractorText.Text = PathUtility.Normalize(saved?.PackageExtractor ?? PackageExtractor.FindBundled() ?? string.Empty);
         LauncherShortcutCheck.IsChecked = saved?.MaintainLauncherShortcut == true;
         GameShortcutCheck.IsChecked = saved?.MaintainGameShortcut == true;
+        AutoCheckForUpdatesCheck.IsChecked = saved?.AutoCheckForUpdates != false;
+        var appEdition = AppUpdateService.CurrentEdition == AppEdition.Portable ? "Portable" : "Installed";
+        AppUpdateCurrentText.Text = $"Current version {AppUpdateService.CurrentVersion.ToString(3)}  •  {appEdition} edition";
         GameLibraryText.Text = PathUtility.Normalize(saved?.GameLibrary ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "shadPS4 Games"));
         EuTitleRadio.IsChecked = saved?.TitleId == "CUSA02901";
@@ -51,6 +59,12 @@ public partial class MainWindow : Window
             TryDetectInstalledGame(showNotFound: false);
             UpdateSettingsVisibility();
         }
+    }
+
+    private async void WindowLoaded(object sender, RoutedEventArgs e)
+    {
+        if (!_isFirstRun && AutoCheckForUpdatesCheck.IsChecked == true)
+            await CheckForAppUpdatesAsync(showCurrentStatus: false, promptForUpdate: true);
     }
 
     private void ModeChanged(object sender, RoutedEventArgs e)
@@ -131,6 +145,7 @@ public partial class MainWindow : Window
         LocationsPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         ExtractorPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         ShortcutPanel.Visibility = settingsView ? Visibility.Visible : Visibility.Collapsed;
+        AppUpdatePanel.Visibility = settingsView ? Visibility.Visible : Visibility.Collapsed;
         BackupPanel.Visibility = settingsView ? Visibility.Visible : Visibility.Collapsed;
         SettingsBanner.Visibility = settingsView ? Visibility.Visible : Visibility.Collapsed;
         CreditsPanel.Visibility = creditsView ? Visibility.Visible : Visibility.Collapsed;
@@ -185,6 +200,116 @@ public partial class MainWindow : Window
                 DeluxeMaintenanceTargetText.Text = Path.Combine(_detectedGame.GameLibrary, _detectedGame.TitleId);
             }
         }
+    }
+
+    private async void CheckForAppUpdates(object sender, RoutedEventArgs e) =>
+        await CheckForAppUpdatesAsync(showCurrentStatus: true, promptForUpdate: true);
+
+    private async Task CheckForAppUpdatesAsync(bool showCurrentStatus, bool promptForUpdate)
+    {
+        if (_checkingForAppUpdates || _downloadingAppUpdate) return;
+        _checkingForAppUpdates = true;
+        CheckForUpdatesButton.IsEnabled = false;
+        CheckForUpdatesButton.Content = "Checking…";
+        try
+        {
+            var release = await AppUpdateService.CheckAsync(CancellationToken.None);
+            _latestAppRelease = release;
+            if (AppUpdateService.IsNewer(release))
+            {
+                AppUpdateTitleText.Text = $"{release.Name} is available";
+                AppUpdateReleaseNotesText.Text = FormatReleaseNotes(release.Notes);
+                InstallAppUpdateButton.Content = AppUpdateService.CurrentEdition == AppEdition.Portable
+                    ? "Download & restart"
+                    : "Download & install";
+                AppUpdateAvailablePanel.Visibility = Visibility.Visible;
+                ShowStatus($"Application update {release.Tag} is available.", false, success: true);
+                if (promptForUpdate)
+                {
+                    var prompt = new AppUpdateWindow(
+                        release, AppUpdateService.CurrentEdition, FormatReleaseNotes(release.Notes)) { Owner = this };
+                    var accepted = prompt.ShowDialog() == true;
+                    if (prompt.DisableAutomaticChecks)
+                    {
+                        AutoCheckForUpdatesCheck.IsChecked = false;
+                        SavePreferences();
+                    }
+                    if (accepted) await DownloadAndInstallAppUpdateAsync();
+                }
+            }
+            else
+            {
+                AppUpdateAvailablePanel.Visibility = Visibility.Collapsed;
+                if (showCurrentStatus)
+                    ShowStatus($"RB4 shadPS4 Installer {AppUpdateService.CurrentVersion.ToString(3)} is up to date.", false, success: true);
+            }
+        }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException or InvalidDataException or TaskCanceledException)
+        {
+            if (showCurrentStatus) ShowStatus("Could not check for application updates: " + ex.Message, true);
+        }
+        finally
+        {
+            _checkingForAppUpdates = false;
+            CheckForUpdatesButton.IsEnabled = true;
+            CheckForUpdatesButton.Content = "Check for updates";
+        }
+    }
+
+    private async void InstallAppUpdate(object sender, RoutedEventArgs e)
+        => await DownloadAndInstallAppUpdateAsync();
+
+    private async Task DownloadAndInstallAppUpdateAsync()
+    {
+        if (_latestAppRelease is null || _downloadingAppUpdate) return;
+        _downloadingAppUpdate = true;
+        CheckForUpdatesButton.IsEnabled = false;
+        InstallAppUpdateButton.IsEnabled = false;
+        InstallProgressBar.Visibility = Visibility.Visible;
+        InstallProgressBar.Value = 0;
+        var progress = new Progress<InstallProgress>(value =>
+        {
+            InstallProgressBar.Value = value.Percent;
+            ShowStatus(value.Message, false);
+        });
+        try
+        {
+            var update = await AppUpdateService.DownloadAsync(
+                _latestAppRelease, AppUpdateService.CurrentEdition, progress, CancellationToken.None);
+            SavePreferences();
+            ShowStatus(AppUpdateService.CurrentEdition == AppEdition.Portable
+                ? "Update verified. Restarting into the new portable version…"
+                : "Update verified. Opening the Windows installer…", false, success: true);
+            AppUpdateService.Launch(update);
+            Application.Current.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            ShowStatus("Application update failed: " + ex.Message, true);
+            _downloadingAppUpdate = false;
+            CheckForUpdatesButton.IsEnabled = true;
+            InstallAppUpdateButton.IsEnabled = true;
+            InstallProgressBar.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void OpenAppUpdateRelease(object sender, RoutedEventArgs e)
+    {
+        if (_latestAppRelease is null) return;
+        Process.Start(new ProcessStartInfo(_latestAppRelease.PageUrl) { UseShellExecute = true });
+    }
+
+    private void AutoCheckForUpdatesChanged(object sender, RoutedEventArgs e) => SavePreferences();
+
+    private static string FormatReleaseNotes(string notes)
+    {
+        var lines = notes.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim().TrimStart('#').Trim())
+            .Where(line => line.Length > 0 && !line.StartsWith("![", StringComparison.Ordinal))
+            .Select(line => line.Replace("**", string.Empty).Replace("`", string.Empty))
+            .Take(8);
+        var text = string.Join(Environment.NewLine, lines);
+        return text.Length <= 900 ? text : text[..897] + "…";
     }
 
     private void DetectInstalledGame(object sender, RoutedEventArgs e) => TryDetectInstalledGame(showNotFound: true);
@@ -979,7 +1104,8 @@ public partial class MainWindow : Window
                 EmptyToNull(PackageExtractorText.Text),
                 EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084",
                 LauncherShortcutCheck.IsChecked == true,
-                GameShortcutCheck.IsChecked == true));
+                GameShortcutCheck.IsChecked == true,
+                AutoCheckForUpdatesCheck.IsChecked == true));
         }
         catch (Exception ex)
         {

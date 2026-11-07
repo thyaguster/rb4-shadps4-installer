@@ -4,6 +4,7 @@
 - [Getting Started](Getting-Started)
 - [Managing an Existing Installation](Managing-an-Existing-Installation)
 - [Emulator and Paths](Emulator-and-Paths)
+- [Application Updates](Application-Updates)
 - [Troubleshooting](Troubleshooting)
 - [Credits](Credits)
 

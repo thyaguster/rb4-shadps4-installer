@@ -8,7 +8,8 @@ public sealed record InstallerPreferences(
     string? PackageExtractor,
     string? TitleId,
     bool MaintainLauncherShortcut = false,
-    bool MaintainGameShortcut = false);
+    bool MaintainGameShortcut = false,
+    bool AutoCheckForUpdates = true);
 
 public sealed record InstalledGame(
     string TitleId,

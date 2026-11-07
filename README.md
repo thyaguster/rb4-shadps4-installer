@@ -40,7 +40,7 @@
 | **shadPS4** | Recommended LlysiX RB4 build or the latest official release |
 | **Existing installs** | Detects region, game version, Deluxe, and installed add-ons |
 | **Safety** | SHA-256 checks, validation, backups, rollback, and install logs |
-| **Convenience** | Drag-and-drop, remembered paths, and desktop shortcuts |
+| **Convenience** | Drag-and-drop, remembered paths, desktop shortcuts, and verified self-updates |
 
 Supported game regions:
 
@@ -66,6 +66,9 @@ For detailed instructions, path explanations, maintenance workflows, and trouble
     <td width="50%"><img src="docs/screenshots/settings.png" alt="Installer settings"><br><strong>Managed emulator and path settings</strong></td>
     <td width="50%"><img src="docs/screenshots/credits.png" alt="Credits page"><br><strong>Credits and original-project links</strong></td>
   </tr>
+  <tr>
+    <td colspan="2"><img src="docs/screenshots/updates.png" alt="Application update settings"><br><strong>Verified automatic and manual application updates</strong></td>
+  </tr>
 </table>
 
 ## Emulator choices
@@ -74,6 +77,15 @@ For detailed instructions, path explanations, maintenance workflows, and trouble
 - **Latest official shadPS4:** the standard official Windows release, kept in a separate managed folder.
 
 The previous managed RB4 build is retained during updates so it can be recovered if necessary.
+
+## Application updates
+
+The app checks [GitHub Releases](https://github.com/thyaguster/rb4-shadps4-installer/releases) for new versions and asks before downloading anything. Automatic checks can be disabled in Settings, and a manual **Check for updates** button remains available.
+
+- **Setup edition:** downloads the verified Setup executable and opens it to update the installed copy.
+- **Portable edition:** downloads the verified Portable ZIP. After confirmation, a hidden one-time helper closes the running executable, places and starts the new version, removes the old executable, and then removes itself.
+
+Application updates do not change game files, emulator files, or saved installer paths.
 
 ## Build from source
 
