@@ -21,6 +21,7 @@ internal sealed class InstallationLog : IDisposable
         Write("RB4 shadPS4 Installer log");
         Write($"Started: {DateTime.Now:yyyy-MM-dd HH:mm:ss zzz}");
         Write($"Mode: {request.Mode}");
+        Write($"Emulator profile: {request.EmulatorProfile}");
         Write($"Title ID: {request.TitleId}");
         Write($"Game library: {request.GameLibrary}");
         Write($"User directory: {request.UserDirectory}");

@@ -158,7 +158,10 @@ internal sealed class InstallerService
                 var plugin = Directory.EnumerateFiles(goldHen, "RB4DX-Plugin.prx", SearchOption.AllDirectories).FirstOrDefault()
                     ?? Directory.EnumerateFiles(deluxeRoot, "RB4DX-Plugin.prx", SearchOption.AllDirectories).FirstOrDefault()
                     ?? throw new InvalidDataException("The Deluxe package does not contain RB4DX-Plugin.prx.");
-                operations.Add((goldHen, Path.Combine(request.UserDirectory, "data", request.TitleId, "GoldHEN"), "Installing Deluxe data"));
+                var deluxeData = request.EmulatorProfile == ShadPs4Profile.LlysixRb4
+                    ? Path.Combine(request.UserDirectory, "data", "GoldHEN")
+                    : Path.Combine(request.UserDirectory, "data", request.TitleId, "GoldHEN");
+                operations.Add((goldHen, deluxeData, "Installing Deluxe data"));
                 var activeGame = Directory.Exists(patchDestination) || !string.IsNullOrWhiteSpace(request.PatchSource)
                     ? patchDestination : baseDestination;
                 operations.Add((plugin, Path.Combine(activeGame, "sce_module", "RB4DX-Plugin.prx"), "Installing Deluxe plugin"));

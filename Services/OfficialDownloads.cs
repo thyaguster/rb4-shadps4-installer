@@ -93,6 +93,18 @@ internal static class OfficialDownloads
             var stagedLauncher = FindLauncher(staging)
                 ?? throw new InvalidDataException("The downloaded RB4-compatible archive did not contain its Windows launcher.");
             var launcherRelativePath = Path.GetRelativePath(staging, stagedLauncher);
+            string? existingPortableUser = null;
+            if (existingLauncher is not null)
+            {
+                try
+                {
+                    var candidate = ManagedEmulatorProfile.GetPortableUserDirectory(Path.GetDirectoryName(existingLauncher)!);
+                    if (Directory.Exists(candidate)) existingPortableUser = candidate;
+                }
+                catch (FileNotFoundException) { }
+            }
+            await ManagedEmulatorProfile.PreparePortableUserAsync(
+                Path.GetDirectoryName(stagedLauncher)!, existingPortableUser, progress, token);
             await File.WriteAllTextAsync(Path.Combine(staging, Rb4BuildMarker), JsonSerializer.Serialize(new
             {
                 tag = release.Tag,

@@ -38,8 +38,22 @@ public partial class MainWindow : Window
         ShadPs4PathSourceText.Text = !string.IsNullOrWhiteSpace(saved?.ShadPs4Directory)
             ? "Remembered from this installer's saved settings."
             : "Using the installer-managed default folder.";
-        UserDirectoryText.Text = PathUtility.Normalize(saved?.UserDirectory ?? ShadPs4Locator.DefaultUserDirectory);
-        if (!string.IsNullOrWhiteSpace(saved?.AddonDirectory)) AddonDirectoryText.Text = PathUtility.Normalize(saved.AddonDirectory);
+        var managedRb4Profile = ManagedEmulatorProfile.IsLlysixRb4(ShadPs4InstallText.Text);
+        if (managedRb4Profile)
+            ShadPs4PathSourceText.Text = "Installer-managed LlysiX RB4 build with an isolated portable user profile.";
+        var savedUserDirectory = saved?.UserDirectory ?? ShadPs4Locator.DefaultUserDirectory;
+        if (managedRb4Profile)
+        {
+            try
+            {
+                var portableUser = ManagedEmulatorProfile.GetPortableUserDirectory(ShadPs4InstallText.Text);
+                if (Directory.Exists(portableUser)) savedUserDirectory = portableUser;
+            }
+            catch (FileNotFoundException) { }
+        }
+        UserDirectoryText.Text = PathUtility.Normalize(savedUserDirectory);
+        if (managedRb4Profile && File.Exists(Path.Combine(savedUserDirectory, "config.json"))) SetAutoAddonDirectory();
+        else if (!string.IsNullOrWhiteSpace(saved?.AddonDirectory)) AddonDirectoryText.Text = PathUtility.Normalize(saved.AddonDirectory);
         else SetAutoAddonDirectory();
         PackageExtractorText.Text = PathUtility.Normalize(saved?.PackageExtractor ?? PackageExtractor.FindBundled() ?? string.Empty);
         LauncherShortcutCheck.IsChecked = saved?.MaintainLauncherShortcut == true;
@@ -63,8 +77,29 @@ public partial class MainWindow : Window
 
     private async void WindowLoaded(object sender, RoutedEventArgs e)
     {
+        await EnsureManagedRb4ProfileAsync();
         if (!_isFirstRun && AutoCheckForUpdatesCheck.IsChecked == true)
             await CheckForAppUpdatesAsync(showCurrentStatus: false, promptForUpdate: true);
+    }
+
+    private async Task EnsureManagedRb4ProfileAsync()
+    {
+        if (!ManagedEmulatorProfile.IsLlysixRb4(ShadPs4InstallText.Text)) return;
+        try
+        {
+            var previousUser = PathUtility.Normalize(UserDirectoryText.Text);
+            var result = await ManagedEmulatorProfile.PreparePortableUserAsync(
+                ShadPs4InstallText.Text, previousUser, null, CancellationToken.None);
+            UserDirectoryText.Text = result.UserDirectory;
+            SetAutoAddonDirectory();
+            SavePreferences();
+            if (result.Migrated)
+                ShowStatus("Your managed LlysiX build now uses an isolated portable profile. Existing settings, saves, and RB4DX data were copied safely.", false, success: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FileNotFoundException)
+        {
+            ShowStatus("Could not prepare the isolated LlysiX profile: " + ex.Message, true);
+        }
     }
 
     private void ModeChanged(object sender, RoutedEventArgs e)
@@ -769,6 +804,7 @@ public partial class MainWindow : Window
     private async Task DownloadManagedShadPs4Async(bool rb4Compatible)
     {
         if (!EnsureShadPs4Closed("update the managed shadPS4 application")) return;
+        var previousUserDirectory = PathUtility.Normalize(UserDirectoryText.Text);
         var destination = rb4Compatible
             ? OfficialDownloads.Rb4ShadPs4Directory
             : OfficialDownloads.DefaultShadPs4Directory;
@@ -793,20 +829,29 @@ public partial class MainWindow : Window
             {
                 rb4Result = await OfficialDownloads.DownloadRb4ShadPs4Async(destination, progress, CancellationToken.None);
                 ShadPs4InstallText.Text = rb4Result.Directory;
-            }
-            else ShadPs4InstallText.Text = await OfficialDownloads.DownloadShadPs4Async(destination, progress, CancellationToken.None);
-            SavePreferences();
-            if (_isFirstRun)
-            {
-                UserDirectoryText.Text = ShadPs4Locator.InferUserDirectory(ShadPs4InstallText.Text);
+                var profile = await ManagedEmulatorProfile.PreparePortableUserAsync(
+                    rb4Result.Directory, previousUserDirectory, progress, CancellationToken.None);
+                UserDirectoryText.Text = profile.UserDirectory;
                 SetAutoAddonDirectory();
             }
+            else
+            {
+                ShadPs4InstallText.Text = await OfficialDownloads.DownloadShadPs4Async(destination, progress, CancellationToken.None);
+                if (_isFirstRun)
+                {
+                    UserDirectoryText.Text = ShadPs4Locator.InferUserDirectory(ShadPs4InstallText.Text);
+                    SetAutoAddonDirectory();
+                }
+            }
+            SavePreferences();
             RefreshDesktopShortcuts(showSuccess: false);
             var message = !rb4Compatible
                 ? "Latest official shadPS4 downloaded and extracted successfully."
                 : rb4Result!.Downloaded
                     ? $"RB4-compatible shadPS4 {rb4Result.Version} downloaded, SHA-256 verified, and installed successfully."
                     : $"RB4-compatible shadPS4 is already up to date ({rb4Result.Version}).";
+            if (rb4Compatible)
+                message += " It uses an isolated portable user profile beside the bundled emulator.";
             if (rb4Result?.UsedPinnedFallback == true)
                 message += " The pinned known-good release was used because the latest release could not be verified.";
             ShowStatus(message, false, success: true);
@@ -867,9 +912,12 @@ public partial class MainWindow : Window
             EmptyToNull(PathUtility.Normalize(DeluxeSourceText.Text)),
             EmptyToNull(PathUtility.Normalize(PackageExtractorText.Text)),
             PathUtility.Normalize(AddonDirectoryText.Text),
-            AddonSourcesList.Items.Cast<string>().Select(PathUtility.Normalize).ToArray(),
+            mode == InstallMode.Deluxe
+                ? []
+                : AddonSourcesList.Items.Cast<string>().Select(PathUtility.Normalize).ToArray(),
             titleId,
-            BackupCheck.IsChecked == true);
+            BackupCheck.IsChecked == true,
+            ManagedEmulatorProfile.Detect(ShadPs4InstallText.Text));
     }
 
     private static string? EmptyToNull(string value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
@@ -1136,6 +1184,11 @@ public partial class MainWindow : Window
                 LauncherShortcutCheck.IsChecked == true,
                 GameShortcutCheck.IsChecked == true,
                 AutoCheckForUpdatesCheck.IsChecked == true));
+            if (ManagedEmulatorProfile.IsLlysixRb4(ShadPs4InstallText.Text))
+                ShadPs4ManagedConfig.SetPaths(
+                    UserDirectoryText.Text,
+                    EmptyToNull(GameLibraryText.Text),
+                    EmptyToNull(AddonDirectoryText.Text));
         }
         catch (Exception ex)
         {
@@ -1174,6 +1227,9 @@ public partial class MainWindow : Window
         var results = new List<string>();
         var launcherFound = HasShadPs4Launcher(ShadPs4InstallText.Text);
         results.Add(launcherFound ? "✓ shadPS4 application found" : "! shadPS4 application not found; game files can still be prepared");
+        results.Add(request.EmulatorProfile == ShadPs4Profile.LlysixRb4
+            ? "✓ LlysiX RB4 profile: isolated user data and root GoldHEN layout"
+            : "✓ Standard shadPS4 profile: existing user-data layout preserved");
 
         var gameVersion = _detectedGame?.Version is { Length: > 0 } version ? $" v{version}" : string.Empty;
         results.Add(_detectedGame is null

@@ -37,7 +37,7 @@
 | **Game setup** | Base game and updates from user-provided PKGs or extracted folders |
 | **RB4 Deluxe** | Download, install, detect, repair, and update |
 | **Extra content** | Individual PKGs, recursively scanned PKG folders, or extracted add-on folders |
-| **shadPS4** | Recommended LlysiX RB4 build or the latest official release |
+| **shadPS4** | Isolated LlysiX RB4 profile or a user-selected existing installation |
 | **Existing installs** | Detects region, game version, Deluxe, and installed add-ons |
 | **Safety** | SHA-256 checks, validation, backups, rollback, and install logs |
 | **Convenience** | Drag-and-drop, remembered paths, desktop shortcuts, and verified self-updates |
@@ -76,8 +76,10 @@ For detailed instructions, path explanations, maintenance workflows, and trouble
 
 ## Emulator choices
 
-- **LlysiX RB4 build — recommended:** an RB4-focused shadPS4 build containing the verified shader fix. The installer checks GitHub for updates and verifies the release digest.
+- **LlysiX RB4 build — recommended:** an RB4-focused shadPS4 build containing the verified shader fix. It is kept independent from other shadPS4 installations and uses a portable `user` folder beside its bundled emulator. The installer checks GitHub for updates and verifies the release digest.
 - **Latest official shadPS4:** the standard official Windows release, kept in a separate managed folder.
+
+When upgrading an older installer-managed LlysiX setup, configuration, saves, keys, input profiles, sysmodules, and RB4DX data are copied into the isolated profile. Existing files under `%APPDATA%\shadPS4` are not deleted. The game library remains in its original location and is not duplicated.
 
 The previous managed RB4 build is retained during updates so it can be recovered if necessary.
 
@@ -88,7 +90,7 @@ The app checks [GitHub Releases](https://github.com/thyaguster/rb4-shadps4-insta
 - **Setup edition:** downloads the verified Setup executable and opens it to update the installed copy.
 - **Portable edition:** downloads the verified Portable ZIP. After confirmation, a hidden one-time helper closes the running executable, places and starts the new version, removes the old executable, and then removes itself.
 
-Application updates do not change game files, emulator files, or saved installer paths.
+Application updates do not replace game files or emulator binaries. Version 0.8.9 performs a one-time, non-destructive path migration for older installer-managed LlysiX profiles; the original AppData files remain available.
 
 ## Build from source
 

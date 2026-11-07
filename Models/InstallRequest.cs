@@ -7,6 +7,12 @@ public enum InstallMode
     Content
 }
 
+public enum ShadPs4Profile
+{
+    Standard,
+    LlysixRb4
+}
+
 public sealed record InstallRequest(
     InstallMode Mode,
     string UserDirectory,
@@ -18,7 +24,8 @@ public sealed record InstallRequest(
     string AddonDirectory,
     IReadOnlyList<string> AddonSources,
     string TitleId,
-    bool CreateBackup);
+    bool CreateBackup,
+    ShadPs4Profile EmulatorProfile = ShadPs4Profile.Standard);
 
 public sealed record ValidationResult(bool IsValid, IReadOnlyList<string> Errors, IReadOnlyList<string> Warnings);
 

@@ -8,12 +8,18 @@ The folder containing the shadPS4 launcher executable.
 
 - **Select existing** keeps your current installation and remembers its location.
 - **Use managed** switches to the installer's Local AppData location.
-- **Download LlysiX RB4 build** installs or updates the recommended RB4-focused build.
+- **Download LlysiX RB4 build** installs or updates the recommended RB4-focused build in its own managed folder. It uses an isolated portable profile and does not replace an existing shadPS4 installation.
 - **Download latest official** installs the current official shadPS4 release separately.
 
 ## User folder
 
 The shadPS4 data folder containing emulator configuration and metadata. The normal Windows default is under `%APPDATA%\shadPS4`.
+
+The installer-managed LlysiX build instead uses a portable `user` folder beside its bundled `shadPS4.exe`. This keeps its configuration, saves, sysmodules, and RB4DX files separate from other emulator versions. On first use, the installer safely copies relevant data from the previously selected user folder; it does not delete the original files.
+
+When the managed LlysiX build is updated, this portable profile is copied into the staged new build before the emulator folders are swapped. The preceding build and its original profile remain in the managed `-previous` recovery folder.
+
+RB4DX uses `user\data\GoldHEN` in the LlysiX profile. Existing standard shadPS4 installations retain their detected title-specific layout.
 
 ## Game library
 

@@ -22,6 +22,12 @@ The **Add PKG folder** picker displays folders rather than individual files. Sel
 
 Restart shadPS4 after installation so it can rescan the library. Recheck the game library, user folder, and additional-content directory in Settings.
 
+## RB4DX installs but the game still looks unmodified
+
+The installer-managed LlysiX build must use its isolated portable profile. In Settings, the user folder should end in `emulator\user`, and RB4DX should be under `data\GoldHEN\RB4DX` inside that folder. The installer migrates older title-specific data automatically without deleting the original AppData profile.
+
+Standard user-selected shadPS4 installations keep their detected layout. The installer also checks both layouts when reporting whether Deluxe is installed.
+
 ## Installation failed
 
 Read the status message and installation log. Keep the backup option enabled so the installer can roll back overwritten files. Ensure shadPS4 is closed and that the destination drive has enough free space.

@@ -10,13 +10,24 @@ internal static class ShadPs4Locator
 
     public static string InferUserDirectory(string shadPs4ApplicationDirectory)
     {
-        var candidates = new[]
+        var candidates = new List<string>
         {
             Path.Combine(shadPs4ApplicationDirectory, "user"),
             shadPs4ApplicationDirectory,
             DefaultUserDirectory
         };
-        return candidates.FirstOrDefault(path => File.Exists(Path.Combine(path, "config.json")))
+        try
+        {
+            var emulator = Directory.Exists(shadPs4ApplicationDirectory)
+                ? Directory.EnumerateFiles(shadPs4ApplicationDirectory, "shadPS4.exe", SearchOption.AllDirectories).FirstOrDefault()
+                : null;
+            if (emulator is not null) candidates.Insert(0, Path.Combine(Path.GetDirectoryName(emulator)!, "user"));
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+        return candidates.Where(path => !path.Equals(DefaultUserDirectory, StringComparison.OrdinalIgnoreCase))
+                   .FirstOrDefault(path => File.Exists(Path.Combine(path, "config.json")))
+            ?? (Directory.Exists(candidates[0]) ? candidates[0] : null)
             ?? DefaultUserDirectory;
     }
 
@@ -143,10 +154,13 @@ internal static class ShadPs4Locator
     {
         try
         {
-            var deluxeData = Path.Combine(userDirectory, "data", titleId, "GoldHEN");
-            var hasData = Directory.Exists(deluxeData) &&
-                (Directory.EnumerateDirectories(deluxeData, "RB4DX*", SearchOption.TopDirectoryOnly).Any() ||
-                 Directory.EnumerateFiles(deluxeData, "*", SearchOption.AllDirectories).Any());
+            var deluxeRoots = new[]
+            {
+                Path.Combine(userDirectory, "data", "GoldHEN"),
+                Path.Combine(userDirectory, "data", titleId, "GoldHEN")
+            };
+            var hasData = deluxeRoots.Any(deluxeData => Directory.Exists(deluxeData) &&
+                Directory.EnumerateDirectories(deluxeData, "RB4DX*", SearchOption.TopDirectoryOnly).Any());
             var gameFolders = new[]
             {
                 Path.Combine(library, titleId),
@@ -157,7 +171,9 @@ internal static class ShadPs4Locator
                 var modules = Path.Combine(folder, "sce_module");
                 return Directory.Exists(modules) &&
                        Directory.EnumerateFiles(modules, "*RB4DX-Plugin.prx", SearchOption.TopDirectoryOnly).Any();
-            });
+            }) || Directory.Exists(Path.Combine(userDirectory, "custom_modules", titleId)) &&
+                 Directory.EnumerateFiles(Path.Combine(userDirectory, "custom_modules", titleId),
+                     "*RB4DX-Plugin.prx", SearchOption.TopDirectoryOnly).Any();
             return hasData && hasPlugin;
         }
         catch (IOException) { return false; }
