@@ -1,5 +1,5 @@
 param(
-    [string]$Version = "0.8.5"
+    [string]$Version = "0.8.6"
 )
 
 $ErrorActionPreference = "Stop"
@@ -7,6 +7,8 @@ $projectRoot = Split-Path -Parent $PSScriptRoot
 $publishDirectory = Join-Path $projectRoot "publish-v$Version"
 $releaseDirectory = Join-Path $projectRoot "release-v$Version"
 $portableZip = Join-Path $releaseDirectory "RB4ShadPS4Installer-Portable-v$Version.zip"
+$portableStageDirectory = Join-Path $projectRoot "portable-v$Version"
+$portableExecutable = Join-Path $portableStageDirectory "RB4ShadPS4Installer-Portable-v$Version.exe"
 
 New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
 dotnet publish (Join-Path $projectRoot "RB4ShadPS4Installer.csproj") `
@@ -17,7 +19,12 @@ dotnet publish (Join-Path $projectRoot "RB4ShadPS4Installer.csproj") `
     -p:FileVersion="$Version.0" -p:AssemblyVersion="$Version.0" `
     -o $publishDirectory
 
-Compress-Archive -Path (Join-Path $publishDirectory "*") `
+New-Item -ItemType Directory -Force -Path $portableStageDirectory | Out-Null
+Get-ChildItem -LiteralPath $portableStageDirectory -File | Remove-Item -Force
+Copy-Item -LiteralPath (Join-Path $publishDirectory "RB4ShadPS4Installer.exe") `
+    -Destination $portableExecutable -Force
+
+Compress-Archive -Path (Join-Path $portableStageDirectory "*") `
     -DestinationPath $portableZip -CompressionLevel Optimal -Force
 
 $compilerCandidates = @(

@@ -28,11 +28,15 @@ jobs:
         run: dotnet build RB4ShadPS4Installer.csproj -c Release --no-restore
 
       - name: Publish portable executable
-        run: dotnet publish RB4ShadPS4Installer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -o artifacts/portable
+        shell: pwsh
+        run: |
+          $version = ([xml](Get-Content RB4ShadPS4Installer.csproj)).Project.PropertyGroup.Version
+          dotnet publish RB4ShadPS4Installer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -o artifacts/portable
+          Rename-Item artifacts/portable/RB4ShadPS4Installer.exe "RB4ShadPS4Installer-Portable-v$version.exe"
 
       - name: Upload portable build
         uses: actions/upload-artifact@v7
         with:
-          name: RB4ShadPS4Installer-win-x64
-          path: artifacts/portable/RB4ShadPS4Installer.exe
+          name: RB4ShadPS4Installer-Portable
+          path: artifacts/portable/RB4ShadPS4Installer-Portable-v*.exe
           if-no-files-found: error

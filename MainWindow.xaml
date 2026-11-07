@@ -18,9 +18,10 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <StackPanel>
-                    <Border Width="58" Height="58" CornerRadius="16" Background="{StaticResource AccentBrush}" HorizontalAlignment="Left">
-                        <TextBlock Text="RB" FontWeight="Black" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
+                    <Image Source="Assets/app-icon.png"
+                           Width="74" Height="74"
+                           Stretch="Uniform"
+                           HorizontalAlignment="Left" />
                     <TextBlock Text="ROCK BAND 4" FontSize="20" FontWeight="Bold" Margin="0,16,0,2" />
                     <TextBlock Text="shadPS4 Installer" Foreground="{StaticResource MutedTextBrush}" FontSize="14" />
                 </StackPanel>

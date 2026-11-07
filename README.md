@@ -13,6 +13,8 @@
   ·
   <a href="#quick-start">Quick start</a>
   ·
+  <a href="https://github.com/thyaguster/rb4-shadps4-installer/wiki">Wiki</a>
+  ·
   <a href="THIRD_PARTY_NOTICES.md">Credits</a>
 </p>
 
@@ -54,6 +56,8 @@ Supported game regions:
 5. Review the summary and install.
 
 Already have RB4 installed? The app detects it and opens directly in content-management mode for updates, Deluxe, DLC, and custom songs.
+
+For detailed instructions, path explanations, maintenance workflows, and troubleshooting, see the [project Wiki](https://github.com/thyaguster/rb4-shadps4-installer/wiki).
 
 ## Screenshots
 

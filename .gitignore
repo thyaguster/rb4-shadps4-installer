@@ -4,6 +4,7 @@
 /publish/
 /publish-*/
 /release-*/
+/portable-*/
 
 # IDE and user-specific state
 .vs/
