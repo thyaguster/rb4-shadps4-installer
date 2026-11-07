@@ -63,6 +63,7 @@ public partial class MainWindow : Window
     private void ShowFirstRun()
     {
         FirstRunPanel.Visibility = Visibility.Visible;
+        SavedPathActionsPanel.Visibility = Visibility.Collapsed;
         SettingsButton.Visibility = Visibility.Collapsed;
         CreditsButton.Visibility = Visibility.Collapsed;
         ShowWorkflow(false);
@@ -92,6 +93,7 @@ public partial class MainWindow : Window
         _isFirstRun = false;
         _settingsVisible = false;
         FirstRunPanel.Visibility = Visibility.Collapsed;
+        SavedPathActionsPanel.Visibility = Visibility.Visible;
         SettingsButton.Visibility = Visibility.Visible;
         CreditsButton.Visibility = Visibility.Visible;
         ShowWorkflow(true);
