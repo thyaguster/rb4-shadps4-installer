@@ -18,6 +18,7 @@ A Windows desktop installer for setting up **Rock Band 4** and **Rock Band 4 Del
 - Validates `param.sfo`, warns about incompatible versions, and backs up overwritten content.
 - Runs preflight checks, logs installation details, automatically rolls back failed installs, and restores retained recovery backups.
 - Creates maintained Desktop shortcuts for the selected emulator and direct RB4 launching.
+- Uses an original rhythm-game/emulation-inspired application icon, with embedded Windows icon sizes from 16px through 256px and a dedicated transparent tray-size asset.
 
 This program does **not** download or include Rock Band 4, updates, DLC, PlayStation firmware, keys, or other copyrighted game content. Use dumps made from software you own.
 
@@ -122,3 +123,5 @@ The download button retrieves extractor version 1.1 from the project's official 
 Generated builds are intentionally excluded from source control. Attach the portable ZIP and Setup executable from `release-v<version>/` to a GitHub Release instead of committing them to the repository.
 
 The installer source is available under the [MIT License](LICENSE). It does not bundle shadPS4, RB4 Deluxe, the PKG extractor, or copyrighted game content. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for project links, attribution, and the separate terms that apply to downloaded third-party software.
+
+Brand assets live under `Assets/`: `app-icon.png` is the high-resolution source, `app.ico` is the multi-resolution Windows application/Setup icon, and `tray-icon.png` is the 32×32 transparent tray-ready asset.

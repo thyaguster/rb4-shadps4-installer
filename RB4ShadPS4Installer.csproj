@@ -17,9 +17,9 @@
     <NeutralLanguage>en</NeutralLanguage>
     <ApplicationIcon Condition="Exists('Assets/app.ico')">Assets/app.ico</ApplicationIcon>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <Version>0.8.2</Version>
-    <FileVersion>0.8.2.0</FileVersion>
-    <AssemblyVersion>0.8.2.0</AssemblyVersion>
-    <InformationalVersion>0.8.2</InformationalVersion>
+    <Version>0.8.3</Version>
+    <FileVersion>0.8.3.0</FileVersion>
+    <AssemblyVersion>0.8.3.0</AssemblyVersion>
+    <InformationalVersion>0.8.3</InformationalVersion>
   </PropertyGroup>
 </Project>

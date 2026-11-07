@@ -1,6 +1,6 @@
 #define MyAppName "RB4 shadPS4 Installer"
 #ifndef MyAppVersion
-  #define MyAppVersion "0.8.2"
+  #define MyAppVersion "0.8.3"
 #endif
 #define MyAppExeName "RB4ShadPS4Installer.exe"
 
@@ -21,6 +21,7 @@ OutputBaseFilename=RB4ShadPS4Installer-Setup-v{#MyAppVersion}
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
+SetupIconFile=..\Assets\app.ico
 CloseApplications=yes
 RestartApplications=no
 UninstallDisplayIcon={app}\{#MyAppExeName}
