@@ -85,7 +85,7 @@ To produce the portable ZIP and Setup executable, install Inno Setup 6 and run:
 .\packaging\build-release.ps1
 ```
 
-GitHub Actions builds every push. Pushing a version tag such as `v0.8.5` automatically publishes a release with the portable ZIP, Setup executable, release notes, and SHA-256 checksums.
+GitHub Actions builds every push. Pushing a version tag such as `v0.8.6` automatically publishes a release with the portable ZIP, Setup executable, release notes, and SHA-256 checksums.
 
 ## Credits and license
 
@@ -93,4 +93,4 @@ This installer builds on work by the shadPS4, LlysiX, mothership-q, MiloHax/RB4D
 
 Released under the [MIT License](LICENSE). Third-party downloads retain their own licenses and ownership.
 
-The high-resolution application and tray masters, multi-resolution Windows icon, and 32px tray asset are available under `Assets/`.
+The exact supplied PNG is preserved as `Assets/original-icon.png` and copied byte-for-byte to `Assets/app-icon.png`. The multi-resolution Windows ICO and 32px tray PNG are direct mechanical resizes of that unchanged source.
