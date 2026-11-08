@@ -100,6 +100,8 @@ The project does not download or distribute Sony firmware. Follow the [official 
 
 Settings also imports the dumped PS4 `font` and `font2` folders. Select either folder directly or a parent containing both; files are merged into the active profile without removing unrelated files. Follow the [official font dumping guide](https://github.com/shadps4-emu/shadPS4/wiki/I.-Quick-start-%5BUsers%5D#6-dumping-firmware-fonts).
 
+If an existing shadPS4 profile configures custom `sys_modules_dir`, `font_dir`, or `addon_install_dir` values, the installer respects those active locations. Installer-managed LlysiX profiles are explicitly aligned to their isolated portable `user` folder while preserving unknown configuration keys.
+
 ## Application updates
 
 The app checks [GitHub Releases](https://github.com/thyaguster/rb4-shadps4-installer/releases) for new versions and asks before downloading anything. Automatic checks can be disabled in Settings, and a manual **Check for updates** button remains available.

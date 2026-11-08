@@ -63,17 +63,19 @@ internal static partial class InstallationHealthService
                 game.AddonCount == 1 ? "1 add-on folder is installed." : $"{game.AddonCount:N0} add-on folders are installed."));
         }
 
-        var moduleStatus = FirmwareModuleService.GetStatus(userDirectory);
+        var moduleStatus = FirmwareModuleService.GetStatus(ShadPs4Locator.FindSysModulesDirectory(userDirectory));
         results.Add(moduleStatus.SupportedInstalled > 0
             ? Pass("Firmware modules", $"{moduleStatus.SupportedInstalled:N0} of {moduleStatus.SupportedTotal:N0} recognized modules are installed" +
-                                       (moduleStatus.AdditionalInstalled > 0 ? $" plus {moduleStatus.AdditionalInstalled:N0} additional module(s)." : "."))
-            : Warn("Firmware modules", "No recognized PS4 firmware modules are installed.", "Import decrypted modules dumped from a PS4 you own in Settings."));
+                                       (moduleStatus.AdditionalInstalled > 0 ? $" plus {moduleStatus.AdditionalInstalled:N0} additional module(s)." : ".") +
+                                       " Active directory: " + moduleStatus.Directory)
+            : Warn("Firmware modules", "No recognized PS4 firmware modules are installed in " + moduleStatus.Directory + ".", "Import decrypted modules dumped from a PS4 you own in Settings."));
 
-        var font = CountFiles(Path.Combine(userDirectory, "fonts", "font"));
-        var font2 = CountFiles(Path.Combine(userDirectory, "fonts", "font2"));
+        var fontsDirectory = ShadPs4Locator.FindFontsDirectory(userDirectory);
+        var font = CountFiles(Path.Combine(fontsDirectory, "font"));
+        var font2 = CountFiles(Path.Combine(fontsDirectory, "font2"));
         results.Add(font + font2 > 0
-            ? Pass("System fonts", $"Found {font:N0} font file(s) and {font2:N0} font2 file(s).")
-            : Warn("System fonts", "No dumped PS4 system fonts were found.", "Import your dumped font and font2 folders from Settings."));
+            ? Pass("System fonts", $"Found {font:N0} font file(s) and {font2:N0} font2 file(s). Active directory: {fontsDirectory}")
+            : Warn("System fonts", "No dumped PS4 system fonts were found in " + fontsDirectory + ".", "Import your dumped font and font2 folders from Settings."));
 
         results.Add(Directory.Exists(addonDirectory)
             ? Pass("Additional-content path", addonDirectory)

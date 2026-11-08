@@ -31,6 +31,12 @@ Open **Settings → PS4 system fonts** and choose **Import font folders**. You c
 
 Dump `font` from `/preinst/common` and `font2` from `/system/common` on a PS4 you own. The installer does not download or provide these proprietary files. See the [official shadPS4 font guide](https://github.com/shadps4-emu/shadPS4/wiki/I.-Quick-start-%5BUsers%5D#6-dumping-firmware-fonts).
 
+## Custom firmware paths
+
+Modern shadPS4 profiles can store `addon_install_dir`, `sys_modules_dir`, and `font_dir` in `config.json`. The installer resolves absolute and user-folder-relative values and uses those active directories for detection, imports, folder shortcuts, and Setup health. Settings marks non-default module/font locations as a **custom path** and shows the full resolved path in a tooltip.
+
+For the installer-managed LlysiX build, these three paths are aligned to the isolated portable profile whenever settings are saved. Other configuration sections and unknown keys are preserved. Existing standard shadPS4 profiles retain their configured custom paths.
+
 RB4DX uses `user\data\GoldHEN` in the LlysiX profile. Existing standard shadPS4 installations retain their detected title-specific layout.
 
 ## Game library

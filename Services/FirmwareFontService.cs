@@ -28,9 +28,8 @@ internal static class FirmwareFontService
     public const string OfficialGuideUrl =
         "https://github.com/shadps4-emu/shadPS4/wiki/I.-Quick-start-%5BUsers%5D#6-dumping-firmware-fonts";
 
-    public static FirmwareFontStatus GetStatus(string userDirectory)
+    public static FirmwareFontStatus GetStatus(string root)
     {
-        var root = Path.Combine(userDirectory, "fonts");
         return new FirmwareFontStatus(root,
             CountFiles(Path.Combine(root, "font")),
             CountFiles(Path.Combine(root, "font2")));
@@ -55,12 +54,11 @@ internal static class FirmwareFontService
             font2Files > 0 ? font2 : null, font2Files);
     }
 
-    public static FirmwareFontImportResult Import(string selectedDirectory, string userDirectory)
+    public static FirmwareFontImportResult Import(string selectedDirectory, string destination)
     {
         var preview = Inspect(selectedDirectory);
         if (preview.TotalFiles == 0)
             throw new InvalidDataException("No populated font or font2 folder was found.");
-        var destination = Path.Combine(userDirectory, "fonts");
         var fontImported = preview.FontDirectory is null
             ? 0 : CopyTree(preview.FontDirectory, Path.Combine(destination, "font"));
         var font2Imported = preview.Font2Directory is null

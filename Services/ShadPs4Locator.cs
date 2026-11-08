@@ -68,22 +68,32 @@ internal static class ShadPs4Locator
     }
 
     public static string FindAddonDirectory(string userDirectory)
+        => FindConfiguredDirectory(userDirectory, "addon_install_dir", "addcont");
+
+    public static string FindSysModulesDirectory(string userDirectory)
+        => FindConfiguredDirectory(userDirectory, "sys_modules_dir", "sys_modules");
+
+    public static string FindFontsDirectory(string userDirectory)
+        => FindConfiguredDirectory(userDirectory, "font_dir", "fonts");
+
+    private static string FindConfiguredDirectory(string userDirectory, string key, string fallbackName)
     {
-        var fallback = Path.Combine(userDirectory, "addcont");
+        var fallback = Path.Combine(userDirectory, fallbackName);
         var configPath = Path.Combine(userDirectory, "config.json");
         if (!File.Exists(configPath)) return fallback;
         try
         {
             using var document = JsonDocument.Parse(File.ReadAllText(configPath));
             if (document.RootElement.TryGetProperty("General", out var general) &&
-                general.TryGetProperty("addon_install_dir", out var addon) &&
-                addon.ValueKind == JsonValueKind.String)
+                general.TryGetProperty(key, out var configured) &&
+                configured.ValueKind == JsonValueKind.String)
             {
-                var value = addon.GetString();
-                if (!string.IsNullOrWhiteSpace(value) && Path.IsPathFullyQualified(value)) return value;
+                var value = configured.GetString();
+                if (!string.IsNullOrWhiteSpace(value))
+                    return Path.GetFullPath(Path.IsPathFullyQualified(value) ? value : Path.Combine(userDirectory, value));
             }
         }
-        catch (JsonException) { }
+        catch (Exception ex) when (ex is JsonException or ArgumentException or NotSupportedException) { }
         return fallback;
     }
 

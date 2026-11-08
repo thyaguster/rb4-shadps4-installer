@@ -750,26 +750,34 @@ public partial class MainWindow : Window
     private void RefreshFirmwareModulesStatus()
     {
         if (FirmwareModulesStatusText is null) return;
-        var status = FirmwareModuleService.GetStatus(PathUtility.Normalize(UserDirectoryText.Text));
+        var userDirectory = PathUtility.Normalize(UserDirectoryText.Text);
+        var status = FirmwareModuleService.GetStatus(ShadPs4Locator.FindSysModulesDirectory(userDirectory));
+        var customModulePath = !Path.GetFullPath(status.Directory).Equals(
+            Path.GetFullPath(Path.Combine(userDirectory, "sys_modules")), StringComparison.OrdinalIgnoreCase)
+            ? "  •  custom path" : string.Empty;
         var additional = status.AdditionalInstalled > 0
             ? $"  •  {status.AdditionalInstalled:N0} additional .sprx file{(status.AdditionalInstalled == 1 ? string.Empty : "s")}"
             : string.Empty;
         FirmwareModulesStatusText.Text = status.SupportedInstalled == 0
-            ? $"No supported modules installed  •  0 of {status.SupportedTotal}{additional}"
-            : $"{status.SupportedInstalled:N0} of {status.SupportedTotal:N0} supported modules installed{additional}";
+            ? $"No supported modules installed  •  0 of {status.SupportedTotal}{additional}{customModulePath}"
+            : $"{status.SupportedInstalled:N0} of {status.SupportedTotal:N0} supported modules installed{additional}{customModulePath}";
         FirmwareModulesStatusText.Foreground = status.SupportedInstalled > 0
             ? (System.Windows.Media.Brush)FindResource("SuccessBrush")
             : (System.Windows.Media.Brush)FindResource("MutedTextBrush");
         FirmwareModulesStatusText.ToolTip = status.MissingSupported.Count == 0
-            ? "All currently recognized shadPS4 modules are present."
-            : "Missing recognized modules:\n" + string.Join("\n", status.MissingSupported);
-        var fonts = FirmwareFontService.GetStatus(PathUtility.Normalize(UserDirectoryText.Text));
+            ? "All currently recognized shadPS4 modules are present.\n" + status.Directory
+            : "Active directory: " + status.Directory + "\n\nMissing recognized modules:\n" + string.Join("\n", status.MissingSupported);
+        var fonts = FirmwareFontService.GetStatus(ShadPs4Locator.FindFontsDirectory(userDirectory));
+        var customFontPath = !Path.GetFullPath(fonts.Directory).Equals(
+            Path.GetFullPath(Path.Combine(userDirectory, "fonts")), StringComparison.OrdinalIgnoreCase)
+            ? "  •  custom path" : string.Empty;
         FirmwareFontsStatusText.Text = fonts.TotalFiles == 0
-            ? "No dumped system fonts installed"
-            : $"font: {fonts.FontFiles:N0} file(s)  •  font2: {fonts.Font2Files:N0} file(s)";
+            ? "No dumped system fonts installed" + customFontPath
+            : $"font: {fonts.FontFiles:N0} file(s)  •  font2: {fonts.Font2Files:N0} file(s){customFontPath}";
         FirmwareFontsStatusText.Foreground = fonts.Complete
             ? (System.Windows.Media.Brush)FindResource("SuccessBrush")
             : (System.Windows.Media.Brush)FindResource("MutedTextBrush");
+        FirmwareFontsStatusText.ToolTip = "Active directory: " + fonts.Directory;
     }
 
     private void ImportFirmwareModules(object sender, RoutedEventArgs e)
@@ -783,7 +791,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        var destination = Path.Combine(PathUtility.Normalize(UserDirectoryText.Text), "sys_modules");
+        var userDirectory = PathUtility.Normalize(UserDirectoryText.Text);
+        var destination = ShadPs4Locator.FindSysModulesDirectory(userDirectory);
         var confirmation = new ConfirmationWindow(
             "Import firmware modules",
             $"Import {importable.Count:N0} dumped module{(importable.Count == 1 ? string.Empty : "s")}?",
@@ -796,7 +805,7 @@ public partial class MainWindow : Window
 
         try
         {
-            var result = FirmwareModuleService.Import(source, PathUtility.Normalize(UserDirectoryText.Text));
+            var result = FirmwareModuleService.Import(source, destination);
             RefreshFirmwareModulesStatus();
             var extra = result.Additional > 0 ? $" and {result.Additional:N0} additional module(s)" : string.Empty;
             var skipped = result.SkippedInvalid > 0 ? $" Skipped {result.SkippedInvalid:N0} invalid or encrypted file(s)." : string.Empty;
@@ -810,7 +819,7 @@ public partial class MainWindow : Window
 
     private void OpenFirmwareModulesFolder(object sender, RoutedEventArgs e)
     {
-        var directory = Path.Combine(PathUtility.Normalize(UserDirectoryText.Text), "sys_modules");
+        var directory = ShadPs4Locator.FindSysModulesDirectory(PathUtility.Normalize(UserDirectoryText.Text));
         try
         {
             Directory.CreateDirectory(directory);
@@ -836,7 +845,8 @@ public partial class MainWindow : Window
             return;
         }
 
-        var destination = Path.Combine(PathUtility.Normalize(UserDirectoryText.Text), "fonts");
+        var userDirectory = PathUtility.Normalize(UserDirectoryText.Text);
+        var destination = ShadPs4Locator.FindFontsDirectory(userDirectory);
         var found = new List<string>();
         if (preview.FontFiles > 0) found.Add($"font ({preview.FontFiles:N0} files)");
         if (preview.Font2Files > 0) found.Add($"font2 ({preview.Font2Files:N0} files)");
@@ -851,7 +861,7 @@ public partial class MainWindow : Window
 
         try
         {
-            var result = FirmwareFontService.Import(source, PathUtility.Normalize(UserDirectoryText.Text));
+            var result = FirmwareFontService.Import(source, destination);
             RefreshFirmwareModulesStatus();
             ShowStatus($"Imported {result.ImportedFontFiles:N0} font file(s) and {result.ImportedFont2Files:N0} font2 file(s).", false, success: true);
         }
@@ -863,7 +873,7 @@ public partial class MainWindow : Window
 
     private void OpenFirmwareFontsFolder(object sender, RoutedEventArgs e)
     {
-        var directory = Path.Combine(PathUtility.Normalize(UserDirectoryText.Text), "fonts");
+        var directory = ShadPs4Locator.FindFontsDirectory(PathUtility.Normalize(UserDirectoryText.Text));
         try
         {
             Directory.CreateDirectory(directory);

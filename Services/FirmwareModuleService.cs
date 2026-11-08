@@ -56,9 +56,8 @@ internal static class FirmwareModuleService
         "libSceXml.sprx"
     };
 
-    public static FirmwareModuleStatus GetStatus(string userDirectory)
+    public static FirmwareModuleStatus GetStatus(string directory)
     {
-        var directory = Path.Combine(userDirectory, "sys_modules");
         var installed = EnumerateModules(directory)
             .Select(path => Path.GetFileName(path))
             .OfType<string>()
@@ -76,9 +75,8 @@ internal static class FirmwareModuleService
 
     public static FirmwareModuleImportResult Import(
         string sourceDirectory,
-        string userDirectory)
+        string destination)
     {
-        var destination = Path.Combine(userDirectory, "sys_modules");
         var candidates = EnumerateModules(sourceDirectory);
         Directory.CreateDirectory(destination);
         var imported = 0;

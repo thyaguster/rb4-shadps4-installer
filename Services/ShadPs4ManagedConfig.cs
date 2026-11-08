@@ -33,6 +33,8 @@ internal static class ShadPs4ManagedConfig
         }
         if (!string.IsNullOrWhiteSpace(addonDirectory))
             general["addon_install_dir"] = addonDirectory;
+        general["sys_modules_dir"] = Path.Combine(userDirectory, "sys_modules");
+        general["font_dir"] = Path.Combine(userDirectory, "fonts");
 
         var temporary = configPath + ".rb4-installer.tmp";
         File.WriteAllText(temporary, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
