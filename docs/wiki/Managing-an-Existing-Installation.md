@@ -14,15 +14,17 @@ Choose **Repair RB4 Deluxe** or **Update or reinstall Deluxe**. You can select a
 
 Content imports unlock after RB4DX is detected. Custom songs do not work with standard RB4, and a mixed PKG folder cannot be reliably separated into official DLC and customs from filenames alone. If only standard RB4 is detected, choose **Install RB4 Deluxe** first. Game updates remain available independently.
 
-Choose **Add content later**, then use one of these source options:
+Choose **Content** in the header. The content manager combines the searchable installed-content library with these source options:
 
 - **Add PKGs:** select one or more individual package files.
 - **Add PKG folder:** select a collection folder; the installer recursively finds and queues every `.pkg` inside it.
 - **Add extracted folder:** select one already-unpacked add-on folder.
 
-Every item must match the installed game's region. The installer can process multiple queued items in one run.
+Every item must match the installed game's region. The manager can process multiple queued items in one run through **Review & install queued content**.
 
-Queued sources show the filename while preserving the complete path in a tooltip. Choose **Content** in the header to open the searchable installed-content page. It reads each installed package's metadata and lists its title, content ID, version, type, and folder location without modifying any files.
+Queued sources show the filename while preserving the complete path in a tooltip. The installed-content list reads each package's metadata and displays its title, content ID, version, type, and folder location.
+
+To uninstall content, select one or more installed items and choose **Move selected to Recycle Bin**. The manager verifies that every selected folder is a direct child of the detected game's configured add-on directory, asks for confirmation, and uses the Windows Recycle Bin so accidental removals can be restored. It never removes the game folder or entire add-on root.
 
 ## Backups and rollback
 

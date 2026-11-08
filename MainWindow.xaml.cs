@@ -129,8 +129,6 @@ public partial class MainWindow : Window
         EditionPanel.Visibility = visibility;
         GameFilesPanel.Visibility = visibility;
         DeluxeMaintenancePanel.Visibility = Visibility.Collapsed;
-        AddonPanel.Visibility = visibility;
-        ContentRequirementPanel.Visibility = Visibility.Collapsed;
         BackupCheck.Visibility = visibility;
         InstallButton.Visibility = visibility;
     }
@@ -182,7 +180,12 @@ public partial class MainWindow : Window
         _settingsVisible = false;
         _creditsVisible = false;
         _installedContentVisible = !_installedContentVisible;
-        if (_installedContentVisible) RefreshInstalledContent();
+        if (_installedContentVisible)
+        {
+            ContentModeRadio.IsChecked = true;
+            _showUpdatePanel = false;
+            RefreshInstalledContent();
+        }
         UpdateSettingsVisibility();
         Dispatcher.BeginInvoke(new Action(MainScrollViewer.ScrollToTop));
     }
@@ -212,6 +215,12 @@ public partial class MainWindow : Window
             : _detectedGame is null ? "♫  Content" : $"♫  Content ({_detectedGame.AddonCount:N0})";
         InstalledContentButton.Style = (Style)FindResource(installedContentView ? "PrimaryButton" : "SecondaryButton");
         if (settingsView) RefreshLatestBackup();
+        if (installedContentView)
+        {
+            var importsUnlocked = _detectedGame?.DeluxeInstalled == true;
+            AddonPanel.Visibility = importsUnlocked ? Visibility.Visible : Visibility.Collapsed;
+            ContentRequirementPanel.Visibility = importsUnlocked ? Visibility.Collapsed : Visibility.Visible;
+        }
 
         if (settingsView || creditsView || installedContentView)
         {
@@ -227,7 +236,9 @@ public partial class MainWindow : Window
 
             DetectedInstallPanel.Visibility = hasDetectedGame ? Visibility.Visible : Visibility.Collapsed;
             StandardModeRadio.Visibility = hasDetectedGame ? Visibility.Collapsed : Visibility.Visible;
+            ContentModeRadio.Visibility = hasDetectedGame ? Visibility.Visible : Visibility.Collapsed;
             Grid.SetColumn(DeluxeModeRadio, hasDetectedGame ? 0 : 1);
+            Grid.SetColumnSpan(DeluxeModeRadio, hasDetectedGame ? 1 : 2);
             Grid.SetColumn(ContentModeRadio, hasDetectedGame ? 1 : 2);
             Grid.SetColumnSpan(ContentModeRadio, hasDetectedGame ? 2 : 1);
             DeluxeModeTitle.Text = hasDetectedGame
@@ -248,10 +259,10 @@ public partial class MainWindow : Window
             GameFilesPanel.Visibility = hideGameUpdateFields || hideInstalledDeluxeFields
                 ? Visibility.Collapsed : Visibility.Visible;
             DeluxeMaintenancePanel.Visibility = hideInstalledDeluxeFields ? Visibility.Visible : Visibility.Collapsed;
-            var contentLocked = !deluxeMode && _detectedGame?.DeluxeInstalled != true;
-            AddonPanel.Visibility = deluxeMode || contentLocked ? Visibility.Collapsed : Visibility.Visible;
-            ContentRequirementPanel.Visibility = contentLocked ? Visibility.Visible : Visibility.Collapsed;
-            InstallButton.IsEnabled = !hideInstalledDeluxeFields && (!contentLocked || _showUpdatePanel);
+            BackupCheck.Visibility = hideGameUpdateFields || hideInstalledDeluxeFields
+                ? Visibility.Collapsed : Visibility.Visible;
+            InstallButton.Visibility = hideGameUpdateFields ? Visibility.Collapsed : Visibility.Visible;
+            InstallButton.IsEnabled = !hideInstalledDeluxeFields;
 
             if (hasDetectedGame)
             {
@@ -382,7 +393,7 @@ public partial class MainWindow : Window
         if (detected is null)
         {
             _detectedGame = null;
-            AddonPanelTitle.Text = "DLC & custom songs";
+            AddonPanelTitle.Text = "Add DLC & custom songs";
             InstalledContentButton.Visibility = Visibility.Collapsed;
             _installedContentVisible = false;
             DetectedInstallPathText.Text = string.Empty;
@@ -408,9 +419,7 @@ public partial class MainWindow : Window
             ? $"{detected.TitleId}  •  {versionText}  •  {deluxeText}  •  {addonText}"
             : $"{detected.TitleId}  •  {versionText}  •  {addonText}";
         DetectedInstallPathText.Text = Path.Combine(detected.GameLibrary, detected.TitleId);
-        AddonPanelTitle.Text = detected.AddonCount == 0
-            ? "DLC & custom songs"
-            : $"DLC & custom songs  •  {detected.AddonCount:N0} installed";
+        AddonPanelTitle.Text = "Add DLC & custom songs";
         InstalledContentButton.Content = $"♫  Content ({detected.AddonCount:N0})";
         InstalledContentButton.Visibility = Visibility.Visible;
         ContentModeRadio.IsChecked = true;
@@ -443,6 +452,7 @@ public partial class MainWindow : Window
 
     private void ChooseDeluxeForContent(object sender, RoutedEventArgs e)
     {
+        _installedContentVisible = false;
         DeluxeModeRadio.IsChecked = true;
         _showDeluxePanel = true;
         UpdateSettingsVisibility();
@@ -488,15 +498,81 @@ public partial class MainWindow : Window
             : "No installed content matches that filter.";
         NoInstalledContentText.Visibility = filtered.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         OpenInstalledContentFolderButton.IsEnabled = false;
+        DeleteInstalledContentButton.IsEnabled = false;
+        DeleteInstalledContentButton.Content = "Move selected to Recycle Bin";
     }
 
     private void InstalledContentSelectionChanged(object sender, SelectionChangedEventArgs e) =>
-        OpenInstalledContentFolderButton.IsEnabled = InstalledContentList.SelectedItem is InstalledContentItem;
+        UpdateInstalledContentSelection();
+
+    private void UpdateInstalledContentSelection()
+    {
+        var selected = InstalledContentList.SelectedItems.Cast<InstalledContentItem>().ToArray();
+        OpenInstalledContentFolderButton.IsEnabled = selected.Length == 1;
+        DeleteInstalledContentButton.IsEnabled = selected.Length > 0;
+        DeleteInstalledContentButton.Content = selected.Length > 1
+            ? $"Move {selected.Length:N0} selected to Recycle Bin"
+            : "Move selected to Recycle Bin";
+    }
 
     private void OpenInstalledContentFolder(object sender, RoutedEventArgs e)
     {
         if (InstalledContentList.SelectedItem is not InstalledContentItem item || !Directory.Exists(item.Folder)) return;
         Process.Start(new ProcessStartInfo(item.Folder) { UseShellExecute = true });
+    }
+
+    private void DeleteInstalledContent(object sender, RoutedEventArgs e)
+    {
+        var selected = InstalledContentList.SelectedItems.Cast<InstalledContentItem>().ToArray();
+        if (selected.Length == 0) return;
+        var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
+        var contentRoot = Path.GetFullPath(Path.Combine(PathUtility.Normalize(AddonDirectoryText.Text), titleId))
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var invalid = selected.FirstOrDefault(item =>
+        {
+            var folder = Path.GetFullPath(item.Folder).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            return string.Equals(folder, contentRoot, StringComparison.OrdinalIgnoreCase) ||
+                   !string.Equals(Path.GetDirectoryName(folder), contentRoot, StringComparison.OrdinalIgnoreCase);
+        });
+        if (invalid is not null)
+        {
+            ShowStatus("The selected content folder is outside the configured RB4 add-on directory and was not removed.", true);
+            return;
+        }
+
+        var preview = string.Join("\n", selected.Take(5).Select(item => "• " + item.Name));
+        if (selected.Length > 5) preview += $"\n• …and {selected.Length - 5:N0} more";
+        var confirmation = new ConfirmationWindow(
+            "Remove installed content",
+            $"Move {selected.Length:N0} installed item{(selected.Length == 1 ? string.Empty : "s")} to the Recycle Bin?",
+            preview + "\n\nRock Band 4 will no longer load the selected content. You can restore it from the Windows Recycle Bin until it is emptied.",
+            "Move to Recycle Bin") { Owner = this };
+        if (confirmation.ShowDialog() != true) return;
+        if (!EnsureShadPs4Closed("remove installed content")) return;
+
+        var removed = 0;
+        try
+        {
+            foreach (var item in selected)
+            {
+                if (!Directory.Exists(item.Folder)) continue;
+                Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(
+                    item.Folder,
+                    Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
+                    Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin,
+                    Microsoft.VisualBasic.FileIO.UICancelOption.ThrowException);
+                removed++;
+            }
+            TryDetectInstalledGame(showNotFound: false);
+            RefreshInstalledContent();
+            ShowStatus($"Moved {removed:N0} installed content item{(removed == 1 ? string.Empty : "s")} to the Recycle Bin. Restart shadPS4 before playing.", false, success: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or OperationCanceledException)
+        {
+            TryDetectInstalledGame(showNotFound: false);
+            RefreshInstalledContent();
+            ShowStatus($"Removed {removed:N0} item(s), then stopped: {ex.Message}", true);
+        }
     }
 
     private void OpenAddonDirectory(object sender, RoutedEventArgs e)
@@ -505,6 +581,12 @@ public partial class MainWindow : Window
         var root = Path.Combine(PathUtility.Normalize(AddonDirectoryText.Text), titleId);
         if (!Directory.Exists(root)) root = PathUtility.Normalize(AddonDirectoryText.Text);
         if (Directory.Exists(root)) Process.Start(new ProcessStartInfo(root) { UseShellExecute = true });
+    }
+
+    private void InstallQueuedContent(object sender, RoutedEventArgs e)
+    {
+        ContentModeRadio.IsChecked = true;
+        StartInstall(sender, e);
     }
 
     private void UserDirectoryChanged(object sender, TextChangedEventArgs e)
@@ -1084,7 +1166,7 @@ public partial class MainWindow : Window
                 ? []
                 : AddonSourcesList.Items.Cast<string>().Select(PathUtility.Normalize).ToArray(),
             titleId,
-            BackupCheck.IsChecked == true,
+            (_installedContentVisible ? ContentBackupCheck.IsChecked : BackupCheck.IsChecked) == true,
             ManagedEmulatorProfile.Detect(ShadPs4InstallText.Text));
     }
 
@@ -1200,6 +1282,7 @@ public partial class MainWindow : Window
             var launcher = ShadPs4Locator.FindLauncherExecutable(ShadPs4InstallText.Text.Trim());
             new CompletionWindow(details, launcher, gameFolder) { Owner = this }.ShowDialog();
             TryDetectInstalledGame(showNotFound: false);
+            if (_installedContentVisible) RefreshInstalledContent();
             RefreshDesktopShortcuts(showSuccess: false);
         }
     }
@@ -1222,10 +1305,12 @@ public partial class MainWindow : Window
     private void SetInstalling(bool installing)
     {
         InstallButton.IsEnabled = true;
-        InstallButton.Visibility = installing ? Visibility.Collapsed : Visibility.Visible;
+        InstallButton.Visibility = installing || _installedContentVisible ? Visibility.Collapsed : Visibility.Visible;
+        InstallQueuedContentButton.IsEnabled = !installing;
         CancelButton.Visibility = installing ? Visibility.Visible : Visibility.Collapsed;
         InstallProgressBar.Visibility = installing ? Visibility.Visible : Visibility.Collapsed;
         if (installing) InstallProgressBar.Value = 0;
+        else UpdateSettingsVisibility();
     }
 
     private void ShowStatus(string message, bool error, bool success = false)

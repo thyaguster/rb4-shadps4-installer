@@ -151,7 +151,7 @@
                                        FontSize="12" Margin="0,18,0,5" />
                             <TextBox x:Name="InstalledContentFilterText" Margin="0,0,0,10"
                                      ToolTip="Filter by title or content ID" TextChanged="FilterInstalledContent" />
-                            <ListBox x:Name="InstalledContentList" Height="330"
+                            <ListBox x:Name="InstalledContentList" Height="235" SelectionMode="Extended"
                                      Background="#0F1219" BorderBrush="{StaticResource PanelBorderBrush}"
                                      HorizontalContentAlignment="Stretch" SelectionChanged="InstalledContentSelectionChanged">
                                 <ListBox.ItemTemplate>
@@ -174,9 +174,60 @@
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
                                 <Button x:Name="OpenInstalledContentFolderButton" Content="Open selected folder"
                                         Style="{StaticResource SecondaryButton}" IsEnabled="False" Click="OpenInstalledContentFolder" />
+                                <Button x:Name="DeleteInstalledContentButton" Content="Move selected to Recycle Bin"
+                                        Style="{StaticResource SecondaryButton}" IsEnabled="False" Margin="8,0,0,0"
+                                        Click="DeleteInstalledContent" />
                                 <Button Content="Open all content" Style="{StaticResource SecondaryButton}"
                                         Margin="8,0,0,0" Click="OpenAddonDirectory" />
                             </StackPanel>
+
+                            <Border x:Name="ContentRequirementPanel" Background="#261B12" BorderBrush="#A96A2A"
+                                    BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,18,0,0" Visibility="Collapsed">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                    <StackPanel Margin="0,0,18,0">
+                                        <TextBlock Text="RB4DX is required for content imports" FontWeight="SemiBold" FontSize="15" />
+                                        <TextBlock Text="Custom songs do not work with standard RB4. Because mixed PKG folders cannot be reliably separated into official DLC and customs before extraction, content imports stay locked until RB4DX is detected."
+                                                   Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,5,0,0" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="Install RB4 Deluxe" Style="{StaticResource PrimaryButton}"
+                                            VerticalAlignment="Center" Click="ChooseDeluxeForContent" />
+                                </Grid>
+                            </Border>
+
+                            <Border x:Name="AddonPanel" Background="#10141B" BorderBrush="{StaticResource PanelBorderBrush}"
+                                    BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,18,0,0">
+                                <StackPanel>
+                                    <TextBlock x:Name="AddonPanelTitle" Text="Add DLC &amp; custom songs" FontWeight="SemiBold" FontSize="15" />
+                                    <TextBlock Text="Queue individual PKGs, a folder containing PKGs, or extracted add-on folders. Every item must target the detected RB4 region."
+                                               Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,5,0,10" TextWrapping="Wrap" />
+                                    <ListBox x:Name="AddonSourcesList" Height="125" Background="#0F1219"
+                                             Foreground="{StaticResource TextBrush}" BorderBrush="{StaticResource PanelBorderBrush}"
+                                             SelectionMode="Extended" HorizontalContentAlignment="Stretch"
+                                             AllowDrop="True" PreviewDragOver="AddonDragOver" Drop="DropAddons"
+                                             ToolTip="Drop one or more DLC/custom-song PKGs or extracted folders here">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource PathFileNameConverter}}"
+                                                           ToolTip="{Binding}" TextTrimming="CharacterEllipsis" Margin="6,3" />
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,9,0,0">
+                                        <Button Content="Add PKGs" Style="{StaticResource SecondaryButton}" Click="AddAddonPackages" />
+                                        <Button Content="Add PKG folder" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="AddAddonPackageFolder" />
+                                        <Button Content="Add extracted folder" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="AddAddonFolder" />
+                                        <Button Content="Remove queued" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="RemoveAddonSources" />
+                                    </StackPanel>
+                                    <Grid Margin="0,12,0,0">
+                                        <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <CheckBox x:Name="ContentBackupCheck" Content="Keep backup files after installation"
+                                                  IsChecked="True" VerticalAlignment="Center" />
+                                        <Button x:Name="InstallQueuedContentButton" Grid.Column="1" Content="Review &amp; install queued content"
+                                                Style="{StaticResource PrimaryButton}" Click="InstallQueuedContent" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
                     </Border>
 
@@ -214,8 +265,8 @@
                                 </RadioButton>
                                 <RadioButton x:Name="ContentModeRadio" Grid.Column="2" GroupName="Mode" Checked="ModeChanged">
                                     <StackPanel Margin="7,0,0,0">
-                                        <TextBlock Text="Add content later" FontWeight="SemiBold" />
-                                        <TextBlock Text="Updates, DLC and custom songs" Foreground="{StaticResource MutedTextBrush}" FontSize="12" />
+                                        <TextBlock Text="Game update" FontWeight="SemiBold" />
+                                        <TextBlock Text="Install a later RB4 update" Foreground="{StaticResource MutedTextBrush}" FontSize="12" />
                                     </StackPanel>
                                 </RadioButton>
                             </Grid>
@@ -495,46 +546,6 @@
                                         IsEnabled="False" Margin="8,0,0,0" Click="DeleteSelectedBackup" />
                                 <Button x:Name="RestoreLatestBackupButton" Content="Restore selected" Style="{StaticResource PrimaryButton}"
                                         IsEnabled="False" Margin="8,0,0,0" Click="RestoreLatestBackup" />
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
-
-                    <Border x:Name="ContentRequirementPanel" Background="#261B12" BorderBrush="#A96A2A"
-                            BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,14,0,0" Visibility="Collapsed">
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <StackPanel Margin="0,0,18,0">
-                                <TextBlock Text="RB4DX is required for content imports" FontWeight="SemiBold" FontSize="15" />
-                                <TextBlock Text="Custom songs do not work with standard RB4. Because mixed PKG folders cannot be reliably separated into official DLC and customs before extraction, content imports stay locked until RB4DX is detected. Game updates remain available."
-                                           Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,5,0,0" TextWrapping="Wrap" />
-                            </StackPanel>
-                            <Button Grid.Column="1" Content="Install RB4 Deluxe" Style="{StaticResource PrimaryButton}"
-                                    VerticalAlignment="Center" Click="ChooseDeluxeForContent" />
-                        </Grid>
-                    </Border>
-
-                    <Border x:Name="AddonPanel" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,14,0,0">
-                        <StackPanel>
-                            <TextBlock x:Name="AddonPanelTitle" Text="DLC &amp; custom songs" FontWeight="SemiBold" FontSize="15" />
-                            <TextBlock Text="Queue individual PKGs, a folder containing PKGs, or extracted add-on folders. Every item must target the selected RB4 region."
-                                       Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,5,0,10" TextWrapping="Wrap" />
-                            <ListBox x:Name="AddonSourcesList" Height="132" Background="#0F1219"
-                                     Foreground="{StaticResource TextBrush}" BorderBrush="{StaticResource PanelBorderBrush}"
-                                     SelectionMode="Extended" HorizontalContentAlignment="Stretch"
-                                     AllowDrop="True" PreviewDragOver="AddonDragOver" Drop="DropAddons"
-                                     ToolTip="Drop one or more DLC/custom-song PKGs or extracted folders here">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding Converter={StaticResource PathFileNameConverter}}"
-                                                   ToolTip="{Binding}" TextTrimming="CharacterEllipsis" Margin="6,3" />
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,9,0,0">
-                                <Button Content="Add PKGs" Style="{StaticResource SecondaryButton}" Click="AddAddonPackages" />
-                                <Button Content="Add PKG folder" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="AddAddonPackageFolder" />
-                                <Button Content="Add extracted folder" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="AddAddonFolder" />
-                                <Button Content="Remove selected" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="RemoveAddonSources" />
                             </StackPanel>
                         </StackPanel>
                     </Border>

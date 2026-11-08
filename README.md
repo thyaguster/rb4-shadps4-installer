@@ -36,7 +36,7 @@
 |---|---|
 | **Game setup** | Base game and updates from user-provided PKGs or extracted folders |
 | **RB4 Deluxe** | Download, install, detect, repair, and update |
-| **Extra content** | RB4DX-gated imports plus a searchable installed DLC/custom-song library |
+| **Extra content** | One manager for importing, searching, opening, and safely removing DLC/custom songs |
 | **shadPS4** | Isolated LlysiX RB4 profile or a user-selected existing installation |
 | **Firmware modules** | Validates and imports decrypted `.sprx` files dumped from the user's own PS4 |
 | **Existing installs** | Detects region, game version, Deluxe, and installed add-ons |
@@ -58,7 +58,7 @@ Supported game regions:
 
 Already have RB4 installed? The app detects it and opens directly in content-management mode for updates, Deluxe, DLC, and custom songs.
 
-Custom-song imports are unlocked after RB4DX is detected. The installer keeps its mixed content queue locked on standard RB4 because it cannot reliably distinguish official DLC PKGs from custom-song PKGs before extraction. Use the **Content** button to browse installed items by package title and content ID.
+Custom-song imports are unlocked after RB4DX is detected. The installer keeps its mixed content queue locked on standard RB4 because it cannot reliably distinguish official DLC PKGs from custom-song PKGs before extraction. Use the **Content** button to browse installed items, queue new packages or folders, and move selected content to the Windows Recycle Bin.
 
 For large DLC/custom-song collections, choose **Add PKG folder**. The installer scans the selected folder and its subfolders, then queues every `.pkg` it finds. The separate **Add extracted folder** button is only for content that has already been unpacked.
 
@@ -69,15 +69,11 @@ For detailed instructions, path explanations, maintenance workflows, and trouble
 <table>
   <tr>
     <td width="50%"><img src="docs/screenshots/settings.png" alt="Installer settings"><br><strong>Managed emulator and path settings</strong></td>
-    <td width="50%"><img src="docs/screenshots/credits.png" alt="Credits page"><br><strong>Credits and original-project links</strong></td>
-  </tr>
-  <tr>
-    <td width="50%"><img src="docs/screenshots/content.png" alt="RB4DX content-import safety check"><br><strong>RB4DX-gated DLC and custom-song imports</strong></td>
-    <td width="50%"><img src="docs/screenshots/updates.png" alt="Application update settings"><br><strong>Verified automatic and manual application updates</strong></td>
-  </tr>
-  <tr>
     <td width="50%"><img src="docs/screenshots/firmware.png" alt="PS4 firmware module import settings"><br><strong>Local firmware-module validation and import</strong></td>
-    <td width="50%"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/credits.png" alt="Credits page"><br><strong>Credits and original-project links</strong></td>
+    <td width="50%"><img src="docs/screenshots/updates.png" alt="Application update settings"><br><strong>Verified automatic and manual application updates</strong></td>
   </tr>
 </table>
 
