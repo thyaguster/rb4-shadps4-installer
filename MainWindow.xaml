@@ -262,11 +262,21 @@
                                              ToolTip="Drop one or more DLC/custom-song PKGs or extracted folders here">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding Converter={StaticResource PathFileNameConverter}}"
-                                                           ToolTip="{Binding}" TextTrimming="CharacterEllipsis" Margin="6,3" />
+                                                <Grid Margin="7,5" ToolTip="{Binding Source}">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding Details}" Foreground="{StaticResource MutedTextBrush}"
+                                                                   FontSize="10" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Status}" Foreground="{Binding StatusColor}"
+                                                               FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0,0,0" />
+                                                </Grid>
                                             </DataTemplate>
                                         </ListBox.ItemTemplate>
                                     </ListBox>
+                                    <TextBlock x:Name="QueuedContentStatusText" Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="11" Margin="0,7,0,0" TextWrapping="Wrap" />
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,9,0,0">
                                         <Button Content="Add PKGs" Style="{StaticResource SecondaryButton}" Click="AddAddonPackages" />
                                         <Button Content="Add PKG folder" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="AddAddonPackageFolder" />
@@ -275,8 +285,13 @@
                                     </StackPanel>
                                     <Grid Margin="0,12,0,0">
                                         <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                        <CheckBox x:Name="ContentBackupCheck" Content="Keep backup files after installation"
-                                                  IsChecked="True" VerticalAlignment="Center" />
+                                        <StackPanel>
+                                            <CheckBox x:Name="ContentBackupCheck" Content="Keep backup files after installation"
+                                                      IsChecked="True" VerticalAlignment="Center" />
+                                            <CheckBox x:Name="ReplaceInstalledContentCheck" Content="Reinstall items already detected as installed"
+                                                      IsChecked="False" Foreground="#E7B36C" FontSize="11" Margin="0,7,0,0"
+                                                      Visibility="Collapsed" Checked="ReplaceInstalledContentChanged" Unchecked="ReplaceInstalledContentChanged" />
+                                        </StackPanel>
                                         <Button x:Name="InstallQueuedContentButton" Grid.Column="1" Content="Review &amp; install queued content"
                                                 Style="{StaticResource PrimaryButton}" Click="InstallQueuedContent" />
                                     </Grid>

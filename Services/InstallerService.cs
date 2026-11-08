@@ -64,7 +64,7 @@ internal sealed class InstallerService
         return new ValidationResult(errors.Count == 0, errors, warnings);
     }
 
-    public async Task InstallAsync(InstallRequest request, IProgress<InstallProgress> progress, CancellationToken token)
+    public async Task<InstallOutcome> InstallAsync(InstallRequest request, IProgress<InstallProgress> progress, CancellationToken token)
     {
         var validation = Validate(request);
         if (!validation.IsValid) throw new InvalidOperationException(string.Join(Environment.NewLine, validation.Errors));
@@ -88,6 +88,8 @@ internal sealed class InstallerService
             operations.Add((request.PatchSource, patchDestination, "Installing RB4 update"));
 
         string? temporaryDeluxe = null;
+        var installedContentCount = 0;
+        var skippedExistingContentCount = 0;
         try
         {
             var packageCount = (PackageExtractor.IsPackage(request.BaseGameSource) ? 1 : 0) +
@@ -138,7 +140,14 @@ internal sealed class InstallerService
 
                 var addon = ResolveAddon(addonRoot, request.TitleId);
                 var destination = Path.Combine(request.AddonDirectory, request.TitleId, addon.ContentId);
+                if (Directory.Exists(destination) && !request.ReplaceExistingContent)
+                {
+                    skippedExistingContentCount++;
+                    progress.Report(new InstallProgress(ProgressForSkipped(packageCount, index), $"Skipping already-installed add-on: {addon.ContentId}"));
+                    continue;
+                }
                 operations.Add((addon.Root, destination, $"Installing add-on: {addon.ContentId}"));
+                installedContentCount++;
             }
 
             if (request.Mode == InstallMode.Deluxe)
@@ -199,6 +208,7 @@ internal sealed class InstallerService
             }
             transaction.Commit();
             progress.Report(new InstallProgress(100, "Installation complete"));
+            return new InstallOutcome(installedContentCount, skippedExistingContentCount);
         }
         catch (Exception installError)
         {
@@ -222,6 +232,9 @@ internal sealed class InstallerService
             TryDeleteDirectory(stagingRoot);
         }
     }
+
+    private static double ProgressForSkipped(int packageCount, int index) =>
+        packageCount > 0 ? Math.Min(61, 2 + 58.0 * (index + 1) / packageCount) : 5;
 
     private static void ValidateSource(string path, string titleId, bool patch, List<string> errors, List<string> warnings)
     {

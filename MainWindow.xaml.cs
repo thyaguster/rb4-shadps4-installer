@@ -31,6 +31,7 @@ public partial class MainWindow : Window
     private bool _downloadingAppUpdate;
     private IReadOnlyList<InstalledContentItem> _installedContent = [];
     private InstallationHealthReport? _healthReport;
+    private int _lastSkippedContentCount;
 
     public MainWindow()
     {
@@ -588,6 +589,7 @@ public partial class MainWindow : Window
                 : $"{addonCount:N0} DLC/add-on item{(addonCount == 1 ? string.Empty : "s")}";
         InstalledContentSummaryText.Text = $"{breakdown} installed for {titleId}. Titles come from package metadata.";
         ApplyInstalledContentFilter();
+        RefreshQueuedContentStatus();
     }
 
     private void FilterInstalledContent(object sender, TextChangedEventArgs e)
@@ -698,6 +700,12 @@ public partial class MainWindow : Window
 
     private void InstallQueuedContent(object sender, RoutedEventArgs e)
     {
+        var queued = AddonSourcesList.Items.Cast<AddonQueueItem>().ToArray();
+        if (queued.Length > 0 && ReplaceInstalledContentCheck.IsChecked != true && queued.All(item => item.IsInstalled))
+        {
+            ShowStatus("Every queued item is already installed. Remove it from the queue or enable deliberate reinstall.", true);
+            return;
+        }
         ContentModeRadio.IsChecked = true;
         StartInstall(sender, e);
     }
@@ -949,8 +957,7 @@ public partial class MainWindow : Window
     private void AddAddonFolder(object sender, RoutedEventArgs e)
     {
         var folder = PickFolder("Choose an extracted DLC or custom-song folder");
-        if (folder is not null && !AddonSourcesList.Items.Cast<string>().Contains(folder, StringComparer.OrdinalIgnoreCase))
-            AddonSourcesList.Items.Add(folder);
+        if (folder is not null) QueueAddonSources([folder]);
     }
 
     private int QueueAddonSources(IEnumerable<string> sources)
@@ -958,17 +965,55 @@ public partial class MainWindow : Window
         var added = 0;
         foreach (var source in sources)
         {
-            if (AddonSourcesList.Items.Cast<string>().Contains(source, StringComparer.OrdinalIgnoreCase)) continue;
-            AddonSourcesList.Items.Add(source);
+            var normalized = PathUtility.Normalize(source);
+            if (AddonSourcesList.Items.Cast<AddonQueueItem>().Any(item =>
+                    string.Equals(item.Source, normalized, StringComparison.OrdinalIgnoreCase))) continue;
+            var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
+            AddonSourcesList.Items.Add(AddonContentInspector.Inspect(normalized, titleId, _installedContent));
             added++;
         }
+        UpdateQueuedContentSummary();
         return added;
     }
 
     private void RemoveAddonSources(object sender, RoutedEventArgs e)
     {
-        foreach (var item in AddonSourcesList.SelectedItems.Cast<string>().ToArray())
+        foreach (var item in AddonSourcesList.SelectedItems.Cast<AddonQueueItem>().ToArray())
             AddonSourcesList.Items.Remove(item);
+        UpdateQueuedContentSummary();
+    }
+
+    private void RefreshQueuedContentStatus()
+    {
+        if (AddonSourcesList is null) return;
+        var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
+        var sources = AddonSourcesList.Items.Cast<AddonQueueItem>().Select(item => item.Source).ToArray();
+        AddonSourcesList.Items.Clear();
+        foreach (var source in sources)
+            AddonSourcesList.Items.Add(AddonContentInspector.Inspect(source, titleId, _installedContent));
+        UpdateQueuedContentSummary();
+    }
+
+    private void ReplaceInstalledContentChanged(object sender, RoutedEventArgs e)
+    {
+        if (!IsInitialized || QueuedContentStatusText is null) return;
+        UpdateQueuedContentSummary();
+    }
+
+    private void UpdateQueuedContentSummary()
+    {
+        if (QueuedContentStatusText is null) return;
+        var items = AddonSourcesList.Items.Cast<AddonQueueItem>().ToArray();
+        var installed = items.Count(item => item.IsInstalled);
+        if (installed == 0 && ReplaceInstalledContentCheck.IsChecked == true)
+            ReplaceInstalledContentCheck.IsChecked = false;
+        ReplaceInstalledContentCheck.Visibility = installed > 0 ? Visibility.Visible : Visibility.Collapsed;
+        if (installed == 0)
+            QueuedContentStatusText.Text = items.Length == 0 ? "Drop content here or use the buttons below." : $"{items.Length:N0} item(s) queued; no installed duplicates detected.";
+        else if (ReplaceInstalledContentCheck.IsChecked == true)
+            QueuedContentStatusText.Text = $"{installed:N0} installed item(s) will be deliberately reinstalled.";
+        else
+            QueuedContentStatusText.Text = $"{installed:N0} installed duplicate(s) will be skipped. Enable reinstall only to repair or replace them.";
     }
 
     private void RefreshBackups(object sender, RoutedEventArgs e) => RefreshLatestBackup();
@@ -1104,13 +1149,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var added = 0;
-        foreach (var path in paths)
-        {
-            if (AddonSourcesList.Items.Cast<string>().Contains(path, StringComparer.OrdinalIgnoreCase)) continue;
-            AddonSourcesList.Items.Add(path);
-            added++;
-        }
+        var added = QueueAddonSources(paths);
         ShowStatus(added == 0 ? "Those content sources are already in the queue." : $"Added {added} content source{(added == 1 ? string.Empty : "s")} to the queue.", false, success: added > 0);
     }
 
@@ -1266,6 +1305,10 @@ public partial class MainWindow : Window
             ? InstallMode.Content
             : DeluxeModeRadio.IsChecked == true ? InstallMode.Deluxe : InstallMode.Standard;
         var contentUnlocked = _detectedGame?.DeluxeInstalled == true;
+        var queuedContent = AddonSourcesList.Items.Cast<AddonQueueItem>().ToArray();
+        var canInstallQueuedContent = mode == InstallMode.Content && contentUnlocked;
+        _lastSkippedContentCount = !canInstallQueuedContent || ReplaceInstalledContentCheck.IsChecked == true
+            ? 0 : queuedContent.Count(item => item.IsInstalled);
         return new InstallRequest(
             mode,
             PathUtility.Normalize(UserDirectoryText.Text),
@@ -1275,12 +1318,15 @@ public partial class MainWindow : Window
             EmptyToNull(PathUtility.Normalize(DeluxeSourceText.Text)),
             EmptyToNull(PathUtility.Normalize(PackageExtractorText.Text)),
             PathUtility.Normalize(AddonDirectoryText.Text),
-            mode == InstallMode.Deluxe || !contentUnlocked
+            !canInstallQueuedContent
                 ? []
-                : AddonSourcesList.Items.Cast<string>().Select(PathUtility.Normalize).ToArray(),
+                : queuedContent
+                    .Where(item => ReplaceInstalledContentCheck.IsChecked == true || !item.IsInstalled)
+                    .Select(item => PathUtility.Normalize(item.Source)).ToArray(),
             titleId,
             (_installedContentVisible ? ContentBackupCheck.IsChecked : BackupCheck.IsChecked) == true,
-            ManagedEmulatorProfile.Detect(ShadPs4InstallText.Text));
+            ManagedEmulatorProfile.Detect(ShadPs4InstallText.Text),
+            ReplaceInstalledContentCheck.IsChecked == true);
     }
 
     private static string? EmptyToNull(string value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
@@ -1345,6 +1391,7 @@ public partial class MainWindow : Window
         SetInstalling(true);
         _cancellation = new CancellationTokenSource();
         var completed = false;
+        var outcome = new InstallOutcome(0, 0);
         var progress = new Progress<InstallProgress>(value =>
         {
             InstallProgressBar.Value = value.Percent;
@@ -1354,7 +1401,7 @@ public partial class MainWindow : Window
 
         try
         {
-            await _installer.InstallAsync(request, progress, _cancellation.Token);
+            outcome = await _installer.InstallAsync(request, progress, _cancellation.Token);
             _installationLog?.Write("Installation completed successfully.");
             ShowStatus("Installation complete. Restart shadPS4 so it can rescan the installed content.", false, success: true);
             completed = true;
@@ -1386,8 +1433,10 @@ public partial class MainWindow : Window
             {
                 var installed = new List<string>();
                 if (request.PatchSource is not null) installed.Add("the selected update");
-                if (request.AddonSources.Count > 0) installed.Add($"{request.AddonSources.Count} additional-content item(s)");
-                details = "Installed successfully: " + string.Join(" and ", installed) + ".";
+                if (outcome.InstalledContentCount > 0) installed.Add($"{outcome.InstalledContentCount} additional-content item(s)");
+                var skipped = _lastSkippedContentCount + outcome.SkippedExistingContentCount;
+                details = installed.Count > 0 ? "Installed successfully: " + string.Join(" and ", installed) + "." : "No new content needed to be installed.";
+                if (skipped > 0) details += $" {skipped:N0} already-installed item(s) were skipped.";
             }
             else details = request.AddonSources.Count > 0
                     ? $"Rock Band 4 and {request.AddonSources.Count} additional-content item(s) were installed successfully."
@@ -1579,10 +1628,12 @@ public partial class MainWindow : Window
 
         for (var index = 0; index < AddonSourcesList.Items.Count; index++)
         {
-            var original = AddonSourcesList.Items[index]?.ToString() ?? string.Empty;
+            if (AddonSourcesList.Items[index] is not AddonQueueItem item) continue;
+            var original = item.Source;
             var normalized = PathUtility.Normalize(original);
             if (string.Equals(original, normalized, StringComparison.Ordinal)) continue;
-            AddonSourcesList.Items[index] = normalized;
+            var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
+            AddonSourcesList.Items[index] = AddonContentInspector.Inspect(normalized, titleId, _installedContent);
             changed = true;
         }
         return changed;
@@ -1596,6 +1647,8 @@ public partial class MainWindow : Window
         results.Add(request.EmulatorProfile == ShadPs4Profile.LlysixRb4
             ? "✓ LlysiX RB4 profile: isolated user data and root GoldHEN layout"
             : "✓ Standard shadPS4 profile: existing user-data layout preserved");
+        if (_lastSkippedContentCount > 0)
+            results.Add($"✓ {_lastSkippedContentCount:N0} already-installed content item(s) will be skipped");
 
         var gameVersion = _detectedGame?.Version is { Length: > 0 } version ? $" v{version}" : string.Empty;
         results.Add(_detectedGame is null

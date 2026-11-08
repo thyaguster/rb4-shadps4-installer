@@ -36,7 +36,7 @@
 |---|---|
 | **Game setup** | Base game and updates from user-provided PKGs or extracted folders |
 | **RB4 Deluxe** | Download, install, detect, repair, and update |
-| **Extra content** | One manager for importing, searching, opening, and safely removing DLC/custom songs |
+| **Extra content** | One manager for importing, searching, opening, and safely removing DLC/custom songs, with duplicate-import protection |
 | **shadPS4** | Isolated LlysiX RB4 profile or a user-selected existing installation |
 | **Firmware modules** | Validates and imports decrypted `.sprx` files dumped from the user's own PS4 |
 | **Existing installs** | Detects region, game version, Deluxe, and installed add-ons |
@@ -60,6 +60,8 @@ Supported game regions:
 Already have RB4 installed? The app detects it and opens directly in content-management mode for updates, Deluxe, DLC, and custom songs.
 
 Custom-song imports are unlocked after RB4DX is detected. The installer keeps its mixed content queue locked on standard RB4 because it cannot reliably distinguish official DLC PKGs from custom-song PKGs before extraction. Use the **Content** button to browse installed items, queue new packages or folders, and move selected content to the Windows Recycle Bin.
+
+Queued content is compared with the installed library. Recognized duplicates are marked and skipped by default; PKGs that can only be identified after extraction receive the same protection during installation. Enable deliberate reinstall only when repairing or replacing existing content.
 
 For large DLC/custom-song collections, choose **Add PKG folder**. The installer scans the selected folder and its subfolders, then queues every `.pkg` it finds. The separate **Add extracted folder** button is only for content that has already been unpacked.
 

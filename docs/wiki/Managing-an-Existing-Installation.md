@@ -1,5 +1,11 @@
 # Managing an Existing Installation
 
+## Duplicate-safe content imports
+
+The Content queue compares extracted folders and recognizable PKG filenames with the installed add-on library. Items already present are marked **INSTALLED** and skipped by default. If a PKG's identity is only available after extraction, the installer performs the same check before copying files.
+
+Enable **Reinstall items already detected as installed** only when intentionally repairing or replacing content. Existing backup and rollback behavior still applies.
+
 When the selected shadPS4 paths contain Rock Band 4, the installer detects the title ID, installed game version, RB4 Deluxe status, and add-on count. Base-game fields are hidden because they are no longer needed.
 
 ## Update the game

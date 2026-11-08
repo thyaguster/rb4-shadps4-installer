@@ -25,8 +25,11 @@ public sealed record InstallRequest(
     IReadOnlyList<string> AddonSources,
     string TitleId,
     bool CreateBackup,
-    ShadPs4Profile EmulatorProfile = ShadPs4Profile.Standard);
+    ShadPs4Profile EmulatorProfile = ShadPs4Profile.Standard,
+    bool ReplaceExistingContent = false);
 
 public sealed record ValidationResult(bool IsValid, IReadOnlyList<string> Errors, IReadOnlyList<string> Warnings);
 
 public sealed record InstallProgress(double Percent, string Message);
+
+public sealed record InstallOutcome(int InstalledContentCount, int SkippedExistingContentCount);
