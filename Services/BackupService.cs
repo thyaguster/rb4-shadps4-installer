@@ -7,14 +7,58 @@ namespace RB4ShadPS4Installer.Services;
 internal sealed record BackupInfo(string Root, BackupManifest Manifest)
 {
     public string DisplayTitle => $"{Manifest.TitleId}  •  {Manifest.CreatedAt.ToLocalTime():g}";
-    public string DisplayDetails => $"{Manifest.Files.Count:N0} affected file(s)  •  " +
+    public long StoredBytes => CalculateStoredBytes();
+    public string DisplayDetails => $"{Manifest.Files.Count:N0} affected file(s)  •  {BackupService.FormatBytes(StoredBytes)}  •  " +
                                     (Manifest.FormatVersion >= 2 ? "SHA-256 protected" : "legacy backup");
+
+    private long CalculateStoredBytes()
+    {
+        long total = 0;
+        foreach (var entry in Manifest.Files.Where(entry => entry.Existed))
+        {
+            if (string.IsNullOrWhiteSpace(entry.BackupRelativePath)) continue;
+            try
+            {
+                var root = Path.GetFullPath(Root);
+                var path = Path.GetFullPath(Path.Combine(Root, entry.BackupRelativePath));
+                var relative = Path.GetRelativePath(root, path);
+                if (Path.IsPathFullyQualified(relative) || relative == ".." ||
+                    relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal) ||
+                    relative.StartsWith(".." + Path.AltDirectorySeparatorChar, StringComparison.Ordinal))
+                    continue;
+                if (File.Exists(path)) total += new FileInfo(path).Length;
+            }
+            catch (Exception) { }
+        }
+        return total;
+    }
 }
 
 internal sealed record BackupValidationResult(bool IsValid, bool IsCryptographicallyVerified, int CheckedFiles, string Message);
 
 internal static class BackupService
 {
+    public static IReadOnlyList<BackupInfo> FindCleanupCandidates(IReadOnlyList<BackupInfo> backups) =>
+        backups
+            .GroupBy(backup => backup.Manifest.TitleId, StringComparer.OrdinalIgnoreCase)
+            .SelectMany(group => group.OrderByDescending(backup => backup.Manifest.CreatedAt).Skip(1))
+            .OrderBy(backup => backup.Manifest.CreatedAt)
+            .ToArray();
+
+    public static string FormatBytes(long bytes)
+    {
+        string[] units = ["B", "KB", "MB", "GB", "TB"];
+        var value = Math.Max(0, bytes);
+        var unit = 0;
+        var display = (double)value;
+        while (display >= 1024 && unit < units.Length - 1)
+        {
+            display /= 1024;
+            unit++;
+        }
+        return unit == 0 ? $"{display:N0} {units[unit]}" : $"{display:N1} {units[unit]}";
+    }
+
     public static IReadOnlyList<BackupInfo> FindAll(string userDirectory)
     {
         var root = Path.Combine(userDirectory, "rb4-installer-backups");

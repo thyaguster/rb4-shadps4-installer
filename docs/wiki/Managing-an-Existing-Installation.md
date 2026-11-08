@@ -40,4 +40,6 @@ New recovery backups store the original size and SHA-256 checksum of every prote
 
 Backups created by versions before 0.8.19 remain available and receive structural checks for required files and safe paths. They are labeled **legacy backup** because their older manifests do not contain cryptographic checksums.
 
+The recovery manager reports the stored size of each backup and the collection's total disk usage. **Delete older** permanently removes only superseded backups and always keeps the newest recovery point independently for each supported game region. A confirmation shows the number of backups and approximate space to reclaim before anything is deleted.
+
 Close shadPS4 before changing game files, restoring a backup, or updating a managed emulator build.

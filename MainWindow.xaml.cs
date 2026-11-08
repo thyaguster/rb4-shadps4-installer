@@ -26,6 +26,7 @@ public partial class MainWindow : Window
     private InstallationLog? _installationLog;
     private string? _lastErrorDetails;
     private BackupInfo? _latestBackup;
+    private IReadOnlyList<BackupInfo> _olderBackups = [];
     private AppRelease? _latestAppRelease;
     private bool _checkingForAppUpdates;
     private bool _downloadingAppUpdate;
@@ -1092,9 +1093,15 @@ public partial class MainWindow : Window
     {
         if (BackupsList is null) return;
         var backups = BackupService.FindAll(PathUtility.Normalize(UserDirectoryText.Text));
+        _olderBackups = BackupService.FindCleanupCandidates(backups);
         BackupsList.ItemsSource = backups;
         BackupsList.SelectedIndex = backups.Count > 0 ? 0 : -1;
         NoBackupsText.Visibility = backups.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        var storedBytes = backups.Sum(backup => backup.StoredBytes);
+        BackupSummaryText.Text = backups.Count == 0
+            ? "No retained backup storage is currently in use."
+            : $"{backups.Count:N0} backup(s) use {BackupService.FormatBytes(storedBytes)}. Cleanup keeps the newest backup for each game region.";
+        CleanupBackupsButton.IsEnabled = _olderBackups.Count > 0;
         UpdateBackupSelection();
     }
 
@@ -1165,6 +1172,37 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             ShowStatus("Could not delete the recovery backup: " + ex.Message, true);
+        }
+        RefreshLatestBackup();
+    }
+
+    private void CleanupOlderBackups(object sender, RoutedEventArgs e)
+    {
+        if (_olderBackups.Count == 0) return;
+        var candidates = _olderBackups.ToArray();
+        var size = candidates.Sum(backup => backup.StoredBytes);
+        var confirmation = new ConfirmationWindow(
+            "Clean up recovery backups",
+            "Delete older recovery backups?",
+            $"This permanently deletes {candidates.Length:N0} older backup(s) using {BackupService.FormatBytes(size)}.\n\nThe newest backup for each game region will be kept. The current Rock Band 4 installation is not changed.",
+            "Delete older backups") { Owner = this };
+        if (confirmation.ShowDialog() != true) return;
+
+        var deleted = 0;
+        try
+        {
+            var userDirectory = PathUtility.Normalize(UserDirectoryText.Text);
+            foreach (var backup in candidates)
+            {
+                BackupService.Delete(backup, userDirectory);
+                deleted++;
+            }
+            ShowStatus($"Deleted {deleted:N0} older backup(s) and reclaimed approximately {BackupService.FormatBytes(size)}.", false, success: true);
+        }
+        catch (Exception ex)
+        {
+            _lastErrorDetails = ex.ToString();
+            ShowStatus($"Cleanup stopped after deleting {deleted:N0} backup(s): {ex.Message}", true);
         }
         RefreshLatestBackup();
     }

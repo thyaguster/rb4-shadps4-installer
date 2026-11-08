@@ -608,12 +608,16 @@
                             BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,14,0,0" Visibility="Collapsed">
                         <StackPanel>
                             <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Text="Recovery backups" FontWeight="SemiBold" FontSize="15" VerticalAlignment="Center" />
-                                <Button Grid.Column="1" Content="Refresh list" Style="{StaticResource SecondaryButton}" Click="RefreshBackups" />
+                                <Button x:Name="CleanupBackupsButton" Grid.Column="1" Content="Delete older" Style="{StaticResource SecondaryButton}"
+                                        IsEnabled="False" Click="CleanupOlderBackups" />
+                                <Button Grid.Column="2" Content="Refresh list" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="RefreshBackups" />
                             </Grid>
                             <TextBlock Text="Backups retained after successful installations can restore every file changed by that installation."
-                                       Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,5,0,12" TextWrapping="Wrap" />
+                                       Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,5,0,3" TextWrapping="Wrap" />
+                            <TextBlock x:Name="BackupSummaryText" Foreground="{StaticResource MutedTextBrush}" FontSize="11"
+                                       Margin="0,0,0,12" TextWrapping="Wrap" />
                             <ListBox x:Name="BackupsList" Height="145" Background="#10141B" BorderBrush="{StaticResource PanelBorderBrush}"
                                      SelectionChanged="BackupSelectionChanged" HorizontalContentAlignment="Stretch">
                                 <ListBox.ItemTemplate>
