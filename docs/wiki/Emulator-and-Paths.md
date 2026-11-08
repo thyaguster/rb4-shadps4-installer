@@ -25,6 +25,12 @@ Open **Settings → PS4 firmware modules** to see how many currently recognized 
 
 Firmware must be dumped from a PlayStation 4 owned by the user. The installer does not download or provide Sony firmware. Use the [official shadPS4 dumping instructions](https://github.com/shadps4-emu/shadPS4/wiki/I.-Quick-start-%5BUsers%5D#4-dumping-firmware-modules).
 
+## PS4 system fonts
+
+Open **Settings → PS4 system fonts** and choose **Import font folders**. You can select a dumped `font` folder, a dumped `font2` folder, or a parent containing both. The importer searches nested dump paths, shows the detected file counts, asks for confirmation, and merges them into the active profile's `fonts\font` and `fonts\font2` directories. Existing same-named files are replaced; unrelated files are preserved.
+
+Dump `font` from `/preinst/common` and `font2` from `/system/common` on a PS4 you own. The installer does not download or provide these proprietary files. See the [official shadPS4 font guide](https://github.com/shadps4-emu/shadPS4/wiki/I.-Quick-start-%5BUsers%5D#6-dumping-firmware-fonts).
+
 RB4DX uses `user\data\GoldHEN` in the LlysiX profile. Existing standard shadPS4 installations retain their detected title-specific layout.
 
 ## Game library

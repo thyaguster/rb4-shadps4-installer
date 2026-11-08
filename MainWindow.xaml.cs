@@ -763,6 +763,13 @@ public partial class MainWindow : Window
         FirmwareModulesStatusText.ToolTip = status.MissingSupported.Count == 0
             ? "All currently recognized shadPS4 modules are present."
             : "Missing recognized modules:\n" + string.Join("\n", status.MissingSupported);
+        var fonts = FirmwareFontService.GetStatus(PathUtility.Normalize(UserDirectoryText.Text));
+        FirmwareFontsStatusText.Text = fonts.TotalFiles == 0
+            ? "No dumped system fonts installed"
+            : $"font: {fonts.FontFiles:N0} file(s)  •  font2: {fonts.Font2Files:N0} file(s)";
+        FirmwareFontsStatusText.Foreground = fonts.Complete
+            ? (System.Windows.Media.Brush)FindResource("SuccessBrush")
+            : (System.Windows.Media.Brush)FindResource("MutedTextBrush");
     }
 
     private void ImportFirmwareModules(object sender, RoutedEventArgs e)
@@ -817,6 +824,59 @@ public partial class MainWindow : Window
 
     private void OpenFirmwareGuide(object sender, RoutedEventArgs e) =>
         Process.Start(new ProcessStartInfo(FirmwareModuleService.OfficialGuideUrl) { UseShellExecute = true });
+
+    private void ImportFirmwareFonts(object sender, RoutedEventArgs e)
+    {
+        var source = PickFolder("Choose your dumped PS4 font/font2 folder or their parent folder");
+        if (source is null) return;
+        var preview = FirmwareFontService.Inspect(source);
+        if (preview.TotalFiles == 0)
+        {
+            ShowStatus("No populated font or font2 folder was found. Select the folder itself or a parent containing it.", true);
+            return;
+        }
+
+        var destination = Path.Combine(PathUtility.Normalize(UserDirectoryText.Text), "fonts");
+        var found = new List<string>();
+        if (preview.FontFiles > 0) found.Add($"font ({preview.FontFiles:N0} files)");
+        if (preview.Font2Files > 0) found.Add($"font2 ({preview.Font2Files:N0} files)");
+        var confirmation = new ConfirmationWindow(
+            "Import PS4 system fonts",
+            "Import " + string.Join(" and ", found) + "?",
+            "Only continue with font folders dumped from a PlayStation 4 you own. Files will be merged into:\n\n" + destination +
+            "\n\nExisting files with the same relative names will be replaced. Other font files will not be removed.",
+            "Import my dump") { Owner = this };
+        if (confirmation.ShowDialog() != true) return;
+        if (!EnsureShadPs4Closed("import PS4 system fonts")) return;
+
+        try
+        {
+            var result = FirmwareFontService.Import(source, PathUtility.Normalize(UserDirectoryText.Text));
+            RefreshFirmwareModulesStatus();
+            ShowStatus($"Imported {result.ImportedFontFiles:N0} font file(s) and {result.ImportedFont2Files:N0} font2 file(s).", false, success: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            ShowStatus("Could not import the PS4 system fonts: " + ex.Message, true);
+        }
+    }
+
+    private void OpenFirmwareFontsFolder(object sender, RoutedEventArgs e)
+    {
+        var directory = Path.Combine(PathUtility.Normalize(UserDirectoryText.Text), "fonts");
+        try
+        {
+            Directory.CreateDirectory(directory);
+            Process.Start(new ProcessStartInfo(directory) { UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ShowStatus("Could not open the system fonts folder: " + ex.Message, true);
+        }
+    }
+
+    private void OpenFirmwareFontGuide(object sender, RoutedEventArgs e) =>
+        Process.Start(new ProcessStartInfo(FirmwareFontService.OfficialGuideUrl) { UseShellExecute = true });
 
     private void BrowseShadPs4Install(object sender, RoutedEventArgs e)
     {

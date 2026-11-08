@@ -73,7 +73,7 @@ internal static partial class InstallationHealthService
         var font2 = CountFiles(Path.Combine(userDirectory, "fonts", "font2"));
         results.Add(font + font2 > 0
             ? Pass("System fonts", $"Found {font:N0} font file(s) and {font2:N0} font2 file(s).")
-            : Warn("System fonts", "No dumped PS4 system fonts were found.", "Import font and font2 from a PS4 you own when font importing becomes available, or place them in the profile's fonts folder."));
+            : Warn("System fonts", "No dumped PS4 system fonts were found.", "Import your dumped font and font2 folders from Settings."));
 
         results.Add(Directory.Exists(addonDirectory)
             ? Pass("Additional-content path", addonDirectory)

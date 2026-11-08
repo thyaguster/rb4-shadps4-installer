@@ -446,6 +446,26 @@
                                 <Button Content="Official dumping guide" Style="{StaticResource SecondaryButton}" Click="OpenFirmwareGuide" />
                                 <Button Content="Open sys_modules" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="OpenFirmwareModulesFolder" />
                             </StackPanel>
+
+                            <Border BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,1,0,0" Margin="0,16,0,14" />
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="PS4 system fonts" FontWeight="SemiBold" FontSize="15" />
+                                    <TextBlock x:Name="FirmwareFontsStatusText" Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="12" Margin="0,5,18,0" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Import font folders" Style="{StaticResource PrimaryButton}"
+                                        VerticalAlignment="Center" Click="ImportFirmwareFonts" />
+                            </Grid>
+                            <TextBlock Text="Select a dumped font or font2 folder, or a parent folder containing both. Files are merged into this profile's fonts folder; existing same-named files are replaced only after confirmation."
+                                       Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,12,0,0" TextWrapping="Wrap" />
+                            <TextBlock Text="Copy font from /preinst/common and font2 from /system/common on a PS4 you own. The installer does not download these proprietary files."
+                                       Foreground="#E7B36C" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                <Button Content="Official font guide" Style="{StaticResource SecondaryButton}" Click="OpenFirmwareFontGuide" />
+                                <Button Content="Open fonts folder" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="OpenFirmwareFontsFolder" />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 

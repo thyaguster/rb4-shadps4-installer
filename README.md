@@ -38,7 +38,7 @@
 | **RB4 Deluxe** | Download, install, detect, repair, and update |
 | **Extra content** | One manager for importing, searching, opening, and safely removing DLC/custom songs, with duplicate-import protection |
 | **shadPS4** | Isolated LlysiX RB4 profile or a user-selected existing installation |
-| **Firmware modules** | Validates and imports decrypted `.sprx` files dumped from the user's own PS4 |
+| **Firmware setup** | Validates and imports decrypted `.sprx` modules plus dumped `font` and `font2` folders from the user's own PS4 |
 | **Existing installs** | Detects region, game version, Deluxe, and installed add-ons |
 | **Setup health** | Checks emulator/profile alignment, RB4 2.21, RB4DX, modules, fonts, disk space, and the latest launch log; exports redacted support bundles |
 | **Safety** | SHA-256 checks, validation, backups, rollback, and install logs |
@@ -97,6 +97,8 @@ The previous managed RB4 build is retained during updates so it can be recovered
 Settings includes an **Import my dump** action for decrypted `.sprx` modules dumped from `/system/common/lib` on a PS4 owned by the user. The importer validates ELF files, reports recognized and additional modules, and installs them in the active profile's `sys_modules` folder. Existing modules are preserved during managed-emulator upgrades.
 
 The project does not download or distribute Sony firmware. Follow the [official shadPS4 dumping guide](https://github.com/shadps4-emu/shadPS4/wiki/I.-Quick-start-%5BUsers%5D#4-dumping-firmware-modules).
+
+Settings also imports the dumped PS4 `font` and `font2` folders. Select either folder directly or a parent containing both; files are merged into the active profile without removing unrelated files. Follow the [official font dumping guide](https://github.com/shadps4-emu/shadPS4/wiki/I.-Quick-start-%5BUsers%5D#6-dumping-firmware-fonts).
 
 ## Application updates
 
