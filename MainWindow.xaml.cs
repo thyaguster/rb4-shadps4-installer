@@ -582,13 +582,13 @@ public partial class MainWindow : Window
         var addonDirectory = PathUtility.Normalize(AddonDirectoryText.Text);
         _installedContent = InstalledContentScanner.Find(addonDirectory, titleId);
         var customCount = _installedContent.Count(item => item.IsCustomSong);
-        var addonCount = _installedContent.Count - customCount;
-        var breakdown = customCount > 0 && addonCount > 0
-            ? $"{customCount:N0} custom song{(customCount == 1 ? string.Empty : "s")} and {addonCount:N0} other add-on{(addonCount == 1 ? string.Empty : "s")}"
+        var unclassifiedCount = _installedContent.Count - customCount;
+        var breakdown = customCount > 0 && unclassifiedCount > 0
+            ? $"{customCount:N0} recognized custom item{(customCount == 1 ? string.Empty : "s")} and {unclassifiedCount:N0} DLC/unclassified item{(unclassifiedCount == 1 ? string.Empty : "s")}"
             : customCount > 0
-                ? $"{customCount:N0} custom song{(customCount == 1 ? string.Empty : "s")}"
-                : $"{addonCount:N0} DLC/add-on item{(addonCount == 1 ? string.Empty : "s")}";
-        InstalledContentSummaryText.Text = $"{breakdown} installed for {titleId}. Titles come from package metadata.";
+                ? $"{customCount:N0} recognized custom item{(customCount == 1 ? string.Empty : "s")}"
+                : $"{unclassifiedCount:N0} DLC/unclassified item{(unclassifiedCount == 1 ? string.Empty : "s")}";
+        InstalledContentSummaryText.Text = $"{breakdown} installed for {titleId}. Classification uses package titles; ambiguous items stay unclassified.";
         ExportContentCatalogButton.IsEnabled = _installedContent.Count > 0;
         ApplyInstalledContentFilter();
         RefreshQueuedContentStatus();
