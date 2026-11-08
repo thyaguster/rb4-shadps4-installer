@@ -40,6 +40,7 @@
 | **shadPS4** | Isolated LlysiX RB4 profile or a user-selected existing installation |
 | **Firmware modules** | Validates and imports decrypted `.sprx` files dumped from the user's own PS4 |
 | **Existing installs** | Detects region, game version, Deluxe, and installed add-ons |
+| **Setup health** | Checks emulator/profile alignment, RB4 2.21, RB4DX, modules, fonts, disk space, and the latest launch log |
 | **Safety** | SHA-256 checks, validation, backups, rollback, and install logs |
 | **Convenience** | Drag-and-drop, remembered paths, desktop shortcuts, and verified self-updates |
 
@@ -72,7 +73,10 @@ For detailed instructions, path explanations, maintenance workflows, and trouble
     <td width="50%"><img src="docs/screenshots/firmware.png" alt="PS4 firmware module import settings"><br><strong>Local firmware-module validation and import</strong></td>
   </tr>
   <tr>
+    <td width="50%"><img src="docs/screenshots/health.png" alt="Setup health report"><br><strong>Read-only installation health report</strong></td>
     <td width="50%"><img src="docs/screenshots/credits.png" alt="Credits page"><br><strong>Credits and original-project links</strong></td>
+  </tr>
+  <tr>
     <td width="50%"><img src="docs/screenshots/updates.png" alt="Application update settings"><br><strong>Verified automatic and manual application updates</strong></td>
   </tr>
 </table>

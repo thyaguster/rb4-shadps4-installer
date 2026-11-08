@@ -19,6 +19,7 @@ public partial class MainWindow : Window
     private bool _settingsVisible;
     private bool _creditsVisible;
     private bool _installedContentVisible;
+    private bool _healthVisible;
     private bool _isFirstRun;
     private bool _showUpdatePanel;
     private bool _showDeluxePanel;
@@ -29,6 +30,7 @@ public partial class MainWindow : Window
     private bool _checkingForAppUpdates;
     private bool _downloadingAppUpdate;
     private IReadOnlyList<InstalledContentItem> _installedContent = [];
+    private InstallationHealthReport? _healthReport;
 
     public MainWindow()
     {
@@ -72,6 +74,7 @@ public partial class MainWindow : Window
         if (_isFirstRun) ShowFirstRun();
         else
         {
+            HealthButton.Visibility = Visibility.Visible;
             ShowWorkflow(true);
             TryDetectInstalledGame(showNotFound: false);
             UpdateSettingsVisibility();
@@ -118,6 +121,7 @@ public partial class MainWindow : Window
         SavedPathActionsPanel.Visibility = Visibility.Collapsed;
         SettingsButton.Visibility = Visibility.Collapsed;
         CreditsButton.Visibility = Visibility.Collapsed;
+        HealthButton.Visibility = Visibility.Collapsed;
         ShowWorkflow(false);
         _settingsVisible = true;
         UpdateSettingsVisibility();
@@ -147,6 +151,7 @@ public partial class MainWindow : Window
         SavedPathActionsPanel.Visibility = Visibility.Visible;
         SettingsButton.Visibility = Visibility.Visible;
         CreditsButton.Visibility = Visibility.Visible;
+        HealthButton.Visibility = Visibility.Visible;
         ShowWorkflow(true);
         TryDetectInstalledGame(showNotFound: false);
         UpdateSettingsVisibility();
@@ -156,6 +161,7 @@ public partial class MainWindow : Window
     {
         _creditsVisible = false;
         _installedContentVisible = false;
+        _healthVisible = false;
         _settingsVisible = !_settingsVisible;
         if (!_settingsVisible) SavePreferences();
         UpdateSettingsVisibility();
@@ -170,6 +176,7 @@ public partial class MainWindow : Window
     {
         _settingsVisible = false;
         _installedContentVisible = false;
+        _healthVisible = false;
         _creditsVisible = !_creditsVisible;
         UpdateSettingsVisibility();
         Dispatcher.BeginInvoke(new Action(MainScrollViewer.ScrollToTop));
@@ -179,6 +186,7 @@ public partial class MainWindow : Window
     {
         _settingsVisible = false;
         _creditsVisible = false;
+        _healthVisible = false;
         _installedContentVisible = !_installedContentVisible;
         if (_installedContentVisible)
         {
@@ -190,12 +198,78 @@ public partial class MainWindow : Window
         Dispatcher.BeginInvoke(new Action(MainScrollViewer.ScrollToTop));
     }
 
+    private void ToggleHealth(object sender, RoutedEventArgs e)
+    {
+        _settingsVisible = false;
+        _creditsVisible = false;
+        _installedContentVisible = false;
+        _healthVisible = !_healthVisible;
+        if (_healthVisible) RunHealthCheck();
+        UpdateSettingsVisibility();
+        Dispatcher.BeginInvoke(new Action(MainScrollViewer.ScrollToTop));
+    }
+
+    private void RunHealthCheck(object sender, RoutedEventArgs e) => RunHealthCheck();
+
+    private void RunHealthCheck()
+    {
+        _healthReport = InstallationHealthService.Run(
+            PathUtility.Normalize(ShadPs4InstallText.Text),
+            PathUtility.Normalize(UserDirectoryText.Text),
+            EmptyToNull(PathUtility.Normalize(GameLibraryText.Text)),
+            PathUtility.Normalize(AddonDirectoryText.Text),
+            EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
+        HealthResultsList.ItemsSource = _healthReport.Results;
+        HealthCountsText.Text = $"{_healthReport.Passed} passed  •  {_healthReport.Warnings} warning(s)  •  {_healthReport.Errors} error(s)";
+        if (_healthReport.Errors > 0)
+        {
+            HealthSummaryText.Text = "The setup needs attention before it is ready for reliable RB4 play.";
+            HealthSummaryPanel.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(55, 20, 28));
+            HealthSummaryPanel.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 91, 114));
+        }
+        else if (_healthReport.Warnings > 0)
+        {
+            HealthSummaryText.Text = "The core setup is available, with a few recommended items to review.";
+            HealthSummaryPanel.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(38, 27, 18));
+            HealthSummaryPanel.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(169, 106, 42));
+        }
+        else
+        {
+            HealthSummaryText.Text = "Rock Band 4, RB4DX, and the selected shadPS4 profile passed every check.";
+            HealthSummaryPanel.Background = (System.Windows.Media.Brush)FindResource("SuccessPanelBrush");
+            HealthSummaryPanel.BorderBrush = (System.Windows.Media.Brush)FindResource("SuccessBorderBrush");
+        }
+    }
+
+    private void CopyHealthReport(object sender, RoutedEventArgs e)
+    {
+        if (_healthReport is null) RunHealthCheck();
+        Clipboard.SetText(InstallationHealthService.Format(_healthReport!));
+        ShowStatus("Setup health report copied. It may contain local folder paths.", false, success: true);
+    }
+
+    private void OpenHealthLog(object sender, RoutedEventArgs e)
+    {
+        var log = Path.Combine(PathUtility.Normalize(UserDirectoryText.Text), "log", "shad_log.txt");
+        if (File.Exists(log)) Process.Start(new ProcessStartInfo(log) { UseShellExecute = true });
+        else ShowStatus("No shadPS4 launch log exists in the selected user profile yet.", true);
+    }
+
+    private void OpenHealthSettings(object sender, RoutedEventArgs e)
+    {
+        _healthVisible = false;
+        _settingsVisible = true;
+        UpdateSettingsVisibility();
+        Dispatcher.BeginInvoke(new Action(() => SettingsBanner.BringIntoView()));
+    }
+
     private void UpdateSettingsVisibility()
     {
         if (LocationsPanel is null || ExtractorPanel is null) return;
         var settingsView = !_isFirstRun && _settingsVisible;
         var creditsView = !_isFirstRun && _creditsVisible;
         var installedContentView = !_isFirstRun && _installedContentVisible;
+        var healthView = !_isFirstRun && _healthVisible;
         var show = _isFirstRun || settingsView;
         LocationsPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         FirmwareModulesPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
@@ -206,6 +280,7 @@ public partial class MainWindow : Window
         SettingsBanner.Visibility = settingsView ? Visibility.Visible : Visibility.Collapsed;
         CreditsPanel.Visibility = creditsView ? Visibility.Visible : Visibility.Collapsed;
         InstalledContentPanel.Visibility = installedContentView ? Visibility.Visible : Visibility.Collapsed;
+        HealthPanel.Visibility = healthView ? Visibility.Visible : Visibility.Collapsed;
         SettingsButton.Content = settingsView ? "←  Back to installer" : "⚙  Settings";
         SettingsButton.Style = (Style)FindResource(settingsView ? "PrimaryButton" : "SecondaryButton");
         CreditsButton.Content = creditsView ? "←  Back to installer" : "♥  Credits";
@@ -214,6 +289,8 @@ public partial class MainWindow : Window
             ? "←  Back to installer"
             : _detectedGame is null ? "♫  Content" : $"♫  Content ({_detectedGame.AddonCount:N0})";
         InstalledContentButton.Style = (Style)FindResource(installedContentView ? "PrimaryButton" : "SecondaryButton");
+        HealthButton.Content = healthView ? "←  BACK TO INSTALLER" : "✓  SETUP HEALTH";
+        HealthButton.Style = (Style)FindResource(healthView ? "PrimaryButton" : "SecondaryButton");
         if (settingsView) RefreshLatestBackup();
         if (installedContentView)
         {
@@ -222,7 +299,7 @@ public partial class MainWindow : Window
             ContentRequirementPanel.Visibility = importsUnlocked ? Visibility.Collapsed : Visibility.Visible;
         }
 
-        if (settingsView || creditsView || installedContentView)
+        if (settingsView || creditsView || installedContentView || healthView)
         {
             ShowWorkflow(false);
             DetectedInstallPanel.Visibility = Visibility.Collapsed;

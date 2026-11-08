@@ -1,5 +1,11 @@
 # Troubleshooting
 
+## Start with Setup health
+
+Open **Setup health** in the installer's left sidebar. It checks the selected emulator, portable profile, RB4 2.21, RB4DX, firmware modules, fonts, content path, disk space, and the latest shadPS4 log without changing anything.
+
+Warnings include a suggested next action. Use **Copy report** when asking for help; the copied report can contain local folder paths. **Open latest log** opens the exact log inspected by the check.
+
 ## The portable app does not open
 
 Extract the entire ZIP before running it. Do not launch the executable from inside the archive. Windows may show a SmartScreen prompt because community builds are not code-signed; inspect the downloaded file and choose the appropriate option only if it came from this repository.
