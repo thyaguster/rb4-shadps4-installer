@@ -33,6 +33,7 @@ public partial class MainWindow : Window
     private IReadOnlyList<InstalledContentItem> _installedContent = [];
     private InstallationHealthReport? _healthReport;
     private Task<InstallationHealthReport?>? _healthCheckTask;
+    private CancellationTokenSource? _healthCheckCancellation;
     private int _lastSkippedContentCount;
 
     public MainWindow()
@@ -162,6 +163,7 @@ public partial class MainWindow : Window
 
     private void ToggleSettings(object sender, RoutedEventArgs e)
     {
+        if (_healthVisible) _healthCheckCancellation?.Cancel();
         _creditsVisible = false;
         _installedContentVisible = false;
         _healthVisible = false;
@@ -177,6 +179,7 @@ public partial class MainWindow : Window
 
     private void ToggleCredits(object sender, RoutedEventArgs e)
     {
+        if (_healthVisible) _healthCheckCancellation?.Cancel();
         _settingsVisible = false;
         _installedContentVisible = false;
         _healthVisible = false;
@@ -187,6 +190,7 @@ public partial class MainWindow : Window
 
     private void ToggleInstalledContent(object sender, RoutedEventArgs e)
     {
+        if (_healthVisible) _healthCheckCancellation?.Cancel();
         _settingsVisible = false;
         _creditsVisible = false;
         _healthVisible = false;
@@ -208,6 +212,7 @@ public partial class MainWindow : Window
         _installedContentVisible = false;
         _healthVisible = !_healthVisible;
         if (_healthVisible) _ = RunHealthCheckAsync();
+        else _healthCheckCancellation?.Cancel();
         UpdateSettingsVisibility();
         Dispatcher.BeginInvoke(new Action(MainScrollViewer.ScrollToTop));
     }
@@ -222,7 +227,9 @@ public partial class MainWindow : Window
         var gameLibrary = EmptyToNull(PathUtility.Normalize(GameLibraryText.Text));
         var addonDirectory = PathUtility.Normalize(AddonDirectoryText.Text);
         var titleId = EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084";
-        _healthCheckTask = RunHealthCheckCoreAsync(applicationDirectory, userDirectory, gameLibrary, addonDirectory, titleId);
+        _healthCheckCancellation = new CancellationTokenSource();
+        _healthCheckTask = RunHealthCheckCoreAsync(
+            applicationDirectory, userDirectory, gameLibrary, addonDirectory, titleId, _healthCheckCancellation);
         return _healthCheckTask;
     }
 
@@ -231,20 +238,41 @@ public partial class MainWindow : Window
         string userDirectory,
         string? gameLibrary,
         string addonDirectory,
-        string titleId)
+        string titleId,
+        CancellationTokenSource cancellation)
     {
         RunHealthCheckButton.IsEnabled = false;
         RunHealthCheckButton.Content = "Checking…";
+        CancelHealthCheckButton.IsEnabled = true;
+        CancelHealthCheckButton.Content = "Cancel";
+        CancelHealthCheckButton.Visibility = Visibility.Visible;
         HealthSummaryText.Text = "Checking the current RB4, shadPS4, and installed-content setup…";
         HealthCountsText.Text = "Scan in progress";
         HealthResultsList.ItemsSource = null;
         try
         {
             var report = await Task.Run(() => InstallationHealthService.Run(
-                applicationDirectory, userDirectory, gameLibrary, addonDirectory, titleId));
+                applicationDirectory, userDirectory, gameLibrary, addonDirectory, titleId, cancellation.Token),
+                cancellation.Token);
             _healthReport = report;
             ApplyHealthReport(report);
             return report;
+        }
+        catch (OperationCanceledException)
+        {
+            if (_healthReport is not null)
+            {
+                ApplyHealthReport(_healthReport);
+                HealthSummaryText.Text = "Scan cancelled. Showing the previous completed results.";
+            }
+            else
+            {
+                HealthSummaryText.Text = "Setup health scan cancelled. Run it again whenever you are ready.";
+                HealthCountsText.Text = "Not checked";
+                HealthResultsList.ItemsSource = null;
+            }
+            ShowStatus("Setup health scan cancelled.", false);
+            return null;
         }
         catch (Exception ex)
         {
@@ -258,8 +286,21 @@ public partial class MainWindow : Window
         {
             RunHealthCheckButton.Content = "Run again";
             RunHealthCheckButton.IsEnabled = true;
+            CancelHealthCheckButton.Visibility = Visibility.Collapsed;
+            CancelHealthCheckButton.Content = "Cancel";
+            CancelHealthCheckButton.IsEnabled = true;
+            cancellation.Dispose();
+            if (ReferenceEquals(_healthCheckCancellation, cancellation)) _healthCheckCancellation = null;
             _healthCheckTask = null;
         }
+    }
+
+    private void CancelHealthCheck(object sender, RoutedEventArgs e)
+    {
+        if (_healthCheckCancellation is null) return;
+        CancelHealthCheckButton.Content = "Cancelling…";
+        CancelHealthCheckButton.IsEnabled = false;
+        _healthCheckCancellation.Cancel();
     }
 
     private void ApplyHealthReport(InstallationHealthReport report)

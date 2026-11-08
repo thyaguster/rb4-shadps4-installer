@@ -4,7 +4,7 @@
 
 Open **Setup health** in the installer's left sidebar. It checks the selected emulator, portable profile, RB4 2.21, RB4DX, installed-content metadata and conflicts, firmware modules, fonts, content path, disk space, and the latest shadPS4 log without changing anything.
 
-The scan runs in the background so large content libraries do not freeze the installer. While it is active, **Run again** changes to **Checking…** and duplicate requests share the same scan. **Copy report** and **Export support ZIP** wait for that active scan to finish instead of using an older result.
+The scan runs in the background so large content libraries do not freeze the installer. While it is active, **Run again** changes to **Checking…** and duplicate requests share the same scan. Use **Cancel** to stop it; moving to Settings, Credits, Content, or back to the installer also cancels the active scan. If an earlier report exists, it remains visible after cancellation. **Copy report** and **Export support ZIP** wait for the active scan instead of using an older result.
 
 Warnings include a suggested next action. Use **Copy report** when asking for help; the copied report can contain local folder paths. **Open latest log** opens the exact log inspected by the check.
 

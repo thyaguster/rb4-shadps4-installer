@@ -85,6 +85,8 @@
                                 </StackPanel>
                                 <Button x:Name="RunHealthCheckButton" Grid.Column="1" Content="Run again" Style="{StaticResource SecondaryButton}"
                                         VerticalAlignment="Center" Click="RunHealthCheck" />
+                                <Button x:Name="CancelHealthCheckButton" Grid.Column="2" Content="Cancel" Style="{StaticResource SecondaryButton}"
+                                        Margin="8,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" Click="CancelHealthCheck" />
                             </Grid>
 
                             <Border x:Name="HealthSummaryPanel" Background="#10141B"

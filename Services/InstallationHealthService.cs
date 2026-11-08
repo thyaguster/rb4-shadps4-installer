@@ -10,9 +10,11 @@ internal static partial class InstallationHealthService
         string userDirectory,
         string? gameLibrary,
         string addonDirectory,
-        string preferredTitleId)
+        string preferredTitleId,
+        CancellationToken token)
     {
         var results = new List<HealthCheckResult>();
+        token.ThrowIfCancellationRequested();
         var launcher = ShadPs4Locator.FindLauncherExecutable(applicationDirectory);
         results.Add(launcher is null
             ? Error("Emulator application", "No shadPS4 launcher or emulator executable was found.", "Choose or download a valid shadPS4 installation in Settings.")
@@ -43,6 +45,7 @@ internal static partial class InstallationHealthService
             ? Pass("shadPS4 configuration", "config.json is present in the selected user folder.")
             : Warn("shadPS4 configuration", "config.json was not found in the selected user folder.", "Run the selected shadPS4 launcher once, then rerun this check."));
 
+        token.ThrowIfCancellationRequested();
         var games = ShadPs4Locator.FindInstalledGames(userDirectory, gameLibrary);
         var game = games.FirstOrDefault(value => value.TitleId == preferredTitleId) ?? games.FirstOrDefault();
         if (game is null)
@@ -61,9 +64,10 @@ internal static partial class InstallationHealthService
                 : Warn("Rock Band 4 Deluxe", "RB4DX data or its plugin is missing.", "Install or repair RB4 Deluxe before importing custom songs."));
             results.Add(new HealthCheckResult(HealthCheckStatus.Information, "Installed content",
                 game.AddonCount == 1 ? "1 add-on folder is installed." : $"{game.AddonCount:N0} add-on folders are installed."));
-            AddContentAuditResult(results, addonDirectory, game.TitleId);
+            AddContentAuditResult(results, addonDirectory, game.TitleId, token);
         }
 
+        token.ThrowIfCancellationRequested();
         var moduleStatus = FirmwareModuleService.GetStatus(ShadPs4Locator.FindSysModulesDirectory(userDirectory));
         results.Add(moduleStatus.SupportedInstalled > 0
             ? Pass("Firmware modules", $"{moduleStatus.SupportedInstalled:N0} of {moduleStatus.SupportedTotal:N0} recognized modules are installed" +
@@ -72,8 +76,8 @@ internal static partial class InstallationHealthService
             : Warn("Firmware modules", "No recognized PS4 firmware modules are installed in " + moduleStatus.Directory + ".", "Import decrypted modules dumped from a PS4 you own in Settings."));
 
         var fontsDirectory = ShadPs4Locator.FindFontsDirectory(userDirectory);
-        var font = CountFiles(Path.Combine(fontsDirectory, "font"));
-        var font2 = CountFiles(Path.Combine(fontsDirectory, "font2"));
+        var font = CountFiles(Path.Combine(fontsDirectory, "font"), token);
+        var font2 = CountFiles(Path.Combine(fontsDirectory, "font2"), token);
         results.Add(font + font2 > 0
             ? Pass("System fonts", $"Found {font:N0} font file(s) and {font2:N0} font2 file(s). Active directory: {fontsDirectory}")
             : Warn("System fonts", "No dumped PS4 system fonts were found in " + fontsDirectory + ".", "Import your dumped font and font2 folders from Settings."));
@@ -83,7 +87,8 @@ internal static partial class InstallationHealthService
             : Warn("Additional-content path", "The configured add-on directory does not exist yet: " + addonDirectory, "It will be created during the first content installation, or can be changed in Settings."));
 
         AddFreeSpaceResult(results, gameLibrary);
-        AddLogResults(results, userDirectory);
+        AddLogResults(results, userDirectory, token);
+        token.ThrowIfCancellationRequested();
         return new InstallationHealthReport(DateTimeOffset.Now, results);
     }
 
@@ -124,7 +129,7 @@ internal static partial class InstallationHealthService
         }
     }
 
-    private static void AddContentAuditResult(List<HealthCheckResult> results, string addonDirectory, string titleId)
+    private static void AddContentAuditResult(List<HealthCheckResult> results, string addonDirectory, string titleId, CancellationToken token)
     {
         if (!PathUtility.IsUsableAbsolutePath(addonDirectory))
         {
@@ -135,7 +140,7 @@ internal static partial class InstallationHealthService
 
         try
         {
-            var audit = ContentAuditService.Audit(addonDirectory, titleId, null, CancellationToken.None);
+            var audit = ContentAuditService.Audit(addonDirectory, titleId, null, token);
             var noteworthy = audit.Findings
                 .Where(finding => finding.Severity is ContentAuditSeverity.Error or ContentAuditSeverity.Warning)
                 .Take(5)
@@ -161,7 +166,7 @@ internal static partial class InstallationHealthService
         }
     }
 
-    private static void AddLogResults(List<HealthCheckResult> results, string userDirectory)
+    private static void AddLogResults(List<HealthCheckResult> results, string userDirectory, CancellationToken token)
     {
         var log = Path.Combine(userDirectory, "log", "shad_log.txt");
         if (!File.Exists(log))
@@ -179,6 +184,7 @@ internal static partial class InstallationHealthService
             var seriousErrors = new List<string>();
             foreach (var line in File.ReadLines(log))
             {
+                token.ThrowIfCancellationRequested();
                 revision ??= Extract(line, "Revision");
                 branch ??= Extract(line, "Branch");
                 if (gpu is null && (line.Contains("GPU", StringComparison.OrdinalIgnoreCase) || line.Contains("Vulkan", StringComparison.OrdinalIgnoreCase)))
@@ -216,10 +222,19 @@ internal static partial class InstallationHealthService
             : null;
     }
 
-    private static int CountFiles(string directory)
+    private static int CountFiles(string directory, CancellationToken token)
     {
         if (!Directory.Exists(directory)) return 0;
-        try { return Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories).Count(); }
+        try
+        {
+            var count = 0;
+            foreach (var _ in Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories))
+            {
+                token.ThrowIfCancellationRequested();
+                count++;
+            }
+            return count;
+        }
         catch (IOException) { return 0; }
         catch (UnauthorizedAccessException) { return 0; }
     }

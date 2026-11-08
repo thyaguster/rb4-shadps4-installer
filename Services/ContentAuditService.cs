@@ -20,7 +20,16 @@ internal static class ContentAuditService
         }
 
         string[] folders;
-        try { folders = Directory.EnumerateDirectories(root, "*", SearchOption.TopDirectoryOnly).ToArray(); }
+        try
+        {
+            var discovered = new List<string>();
+            foreach (var folder in Directory.EnumerateDirectories(root, "*", SearchOption.TopDirectoryOnly))
+            {
+                token.ThrowIfCancellationRequested();
+                discovered.Add(folder);
+            }
+            folders = discovered.ToArray();
+        }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             findings.Add(new(ContentAuditSeverity.Error, "Content directory cannot be read", ex.Message, root));
