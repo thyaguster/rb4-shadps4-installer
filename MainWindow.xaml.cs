@@ -255,6 +255,42 @@ public partial class MainWindow : Window
         else ShowStatus("No shadPS4 launch log exists in the selected user profile yet.", true);
     }
 
+    private void ExportSupportBundle(object sender, RoutedEventArgs e)
+    {
+        if (_healthReport is null) RunHealthCheck();
+        var confirmation = MessageBox.Show(
+            "The ZIP will contain the health report and recent shadPS4/installer logs. Local paths and your Windows user name are redacted, and keys, saves, firmware, game files, PKGs, and configuration files are excluded.\n\nReview the text files before sharing. Continue?",
+            "Create support bundle", MessageBoxButton.YesNo, MessageBoxImage.Information);
+        if (confirmation != MessageBoxResult.Yes) return;
+
+        var dialog = new SaveFileDialog
+        {
+            Title = "Save the redacted support bundle",
+            Filter = "ZIP archive (*.zip)|*.zip",
+            FileName = $"RB4ShadPS4-Support-{DateTime.Now:yyyyMMdd-HHmmss}.zip",
+            AddExtension = true,
+            DefaultExt = ".zip"
+        };
+        if (dialog.ShowDialog(this) != true) return;
+        try
+        {
+            SupportBundleService.Create(
+                dialog.FileName,
+                _healthReport!,
+                PathUtility.Normalize(ShadPs4InstallText.Text),
+                PathUtility.Normalize(UserDirectoryText.Text),
+                EmptyToNull(PathUtility.Normalize(GameLibraryText.Text)),
+                PathUtility.Normalize(AddonDirectoryText.Text),
+                EmptyToNull(PathUtility.Normalize(PackageExtractorText.Text)));
+            ShowStatus("Redacted support bundle saved. Review its text files before sharing.", false, success: true);
+            Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{dialog.FileName}\"") { UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            ShowStatus("Could not create the support bundle: " + ex.Message, true);
+        }
+    }
+
     private void OpenHealthSettings(object sender, RoutedEventArgs e)
     {
         _healthVisible = false;

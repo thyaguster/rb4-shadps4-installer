@@ -117,6 +117,7 @@
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,7,0,0">
                                 <Button Content="Open latest log" Style="{StaticResource SecondaryButton}" Click="OpenHealthLog" />
                                 <Button Content="Copy report" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="CopyHealthReport" />
+                                <Button Content="Export support ZIP" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="ExportSupportBundle" />
                                 <Button Content="Open settings" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" Click="OpenHealthSettings" />
                             </StackPanel>
                         </StackPanel>

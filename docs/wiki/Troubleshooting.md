@@ -6,6 +6,8 @@ Open **Setup health** in the installer's left sidebar. It checks the selected em
 
 Warnings include a suggested next action. Use **Copy report** when asking for help; the copied report can contain local folder paths. **Open latest log** opens the exact log inspected by the check.
 
+**Export support ZIP** creates a small troubleshooting archive containing the health report, latest shadPS4 log, latest installer log, and basic runtime information. Configured paths, the Windows user name, email addresses, and IPv4 addresses are redacted. Keys, saves, firmware, configuration files, games, PKGs, add-ons, and backup contents are excluded. Always review the text files before sharing the ZIP.
+
 ## The portable app does not open
 
 Extract the entire ZIP before running it. Do not launch the executable from inside the archive. Windows may show a SmartScreen prompt because community builds are not code-signed; inspect the downloaded file and choose the appropriate option only if it came from this repository.
