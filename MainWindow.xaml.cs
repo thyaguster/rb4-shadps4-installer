@@ -32,6 +32,7 @@ public partial class MainWindow : Window
     private bool _downloadingAppUpdate;
     private IReadOnlyList<InstalledContentItem> _installedContent = [];
     private InstallationHealthReport? _healthReport;
+    private Task<InstallationHealthReport?>? _healthCheckTask;
     private int _lastSkippedContentCount;
 
     public MainWindow()
@@ -206,30 +207,72 @@ public partial class MainWindow : Window
         _creditsVisible = false;
         _installedContentVisible = false;
         _healthVisible = !_healthVisible;
-        if (_healthVisible) RunHealthCheck();
+        if (_healthVisible) _ = RunHealthCheckAsync();
         UpdateSettingsVisibility();
         Dispatcher.BeginInvoke(new Action(MainScrollViewer.ScrollToTop));
     }
 
-    private void RunHealthCheck(object sender, RoutedEventArgs e) => RunHealthCheck();
+    private async void RunHealthCheck(object sender, RoutedEventArgs e) => await RunHealthCheckAsync();
 
-    private void RunHealthCheck()
+    private Task<InstallationHealthReport?> RunHealthCheckAsync()
     {
-        _healthReport = InstallationHealthService.Run(
-            PathUtility.Normalize(ShadPs4InstallText.Text),
-            PathUtility.Normalize(UserDirectoryText.Text),
-            EmptyToNull(PathUtility.Normalize(GameLibraryText.Text)),
-            PathUtility.Normalize(AddonDirectoryText.Text),
-            EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
-        HealthResultsList.ItemsSource = _healthReport.Results;
-        HealthCountsText.Text = $"{_healthReport.Passed} passed  •  {_healthReport.Warnings} warning(s)  •  {_healthReport.Errors} error(s)";
-        if (_healthReport.Errors > 0)
+        if (_healthCheckTask is not null) return _healthCheckTask;
+        var applicationDirectory = PathUtility.Normalize(ShadPs4InstallText.Text);
+        var userDirectory = PathUtility.Normalize(UserDirectoryText.Text);
+        var gameLibrary = EmptyToNull(PathUtility.Normalize(GameLibraryText.Text));
+        var addonDirectory = PathUtility.Normalize(AddonDirectoryText.Text);
+        var titleId = EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084";
+        _healthCheckTask = RunHealthCheckCoreAsync(applicationDirectory, userDirectory, gameLibrary, addonDirectory, titleId);
+        return _healthCheckTask;
+    }
+
+    private async Task<InstallationHealthReport?> RunHealthCheckCoreAsync(
+        string applicationDirectory,
+        string userDirectory,
+        string? gameLibrary,
+        string addonDirectory,
+        string titleId)
+    {
+        RunHealthCheckButton.IsEnabled = false;
+        RunHealthCheckButton.Content = "Checking…";
+        HealthSummaryText.Text = "Checking the current RB4, shadPS4, and installed-content setup…";
+        HealthCountsText.Text = "Scan in progress";
+        HealthResultsList.ItemsSource = null;
+        try
+        {
+            var report = await Task.Run(() => InstallationHealthService.Run(
+                applicationDirectory, userDirectory, gameLibrary, addonDirectory, titleId));
+            _healthReport = report;
+            ApplyHealthReport(report);
+            return report;
+        }
+        catch (Exception ex)
+        {
+            _lastErrorDetails = ex.ToString();
+            HealthSummaryText.Text = "Setup health could not complete: " + ex.Message;
+            HealthCountsText.Text = "Scan failed";
+            ShowStatus("Setup health failed: " + ex.Message, true);
+            return null;
+        }
+        finally
+        {
+            RunHealthCheckButton.Content = "Run again";
+            RunHealthCheckButton.IsEnabled = true;
+            _healthCheckTask = null;
+        }
+    }
+
+    private void ApplyHealthReport(InstallationHealthReport report)
+    {
+        HealthResultsList.ItemsSource = report.Results;
+        HealthCountsText.Text = $"{report.Passed} passed  •  {report.Warnings} warning(s)  •  {report.Errors} error(s)";
+        if (report.Errors > 0)
         {
             HealthSummaryText.Text = "The setup needs attention before it is ready for reliable RB4 play.";
             HealthSummaryPanel.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(55, 20, 28));
             HealthSummaryPanel.BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 91, 114));
         }
-        else if (_healthReport.Warnings > 0)
+        else if (report.Warnings > 0)
         {
             HealthSummaryText.Text = "The core setup is available, with a few recommended items to review.";
             HealthSummaryPanel.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(38, 27, 18));
@@ -243,10 +286,13 @@ public partial class MainWindow : Window
         }
     }
 
-    private void CopyHealthReport(object sender, RoutedEventArgs e)
+    private async void CopyHealthReport(object sender, RoutedEventArgs e)
     {
-        if (_healthReport is null) RunHealthCheck();
-        Clipboard.SetText(InstallationHealthService.Format(_healthReport!));
+        var report = _healthCheckTask is not null
+            ? await _healthCheckTask
+            : _healthReport ?? await RunHealthCheckAsync();
+        if (report is null) return;
+        Clipboard.SetText(InstallationHealthService.Format(report));
         ShowStatus("Setup health report copied. It may contain local folder paths.", false, success: true);
     }
 
@@ -257,9 +303,12 @@ public partial class MainWindow : Window
         else ShowStatus("No shadPS4 launch log exists in the selected user profile yet.", true);
     }
 
-    private void ExportSupportBundle(object sender, RoutedEventArgs e)
+    private async void ExportSupportBundle(object sender, RoutedEventArgs e)
     {
-        if (_healthReport is null) RunHealthCheck();
+        var report = _healthCheckTask is not null
+            ? await _healthCheckTask
+            : _healthReport ?? await RunHealthCheckAsync();
+        if (report is null) return;
         var confirmation = MessageBox.Show(
             "The ZIP will contain the health report and recent shadPS4/installer logs. Local paths and your Windows user name are redacted, and keys, saves, firmware, game files, PKGs, and configuration files are excluded.\n\nReview the text files before sharing. Continue?",
             "Create support bundle", MessageBoxButton.YesNo, MessageBoxImage.Information);
@@ -278,7 +327,7 @@ public partial class MainWindow : Window
         {
             SupportBundleService.Create(
                 dialog.FileName,
-                _healthReport!,
+                report,
                 PathUtility.Normalize(ShadPs4InstallText.Text),
                 PathUtility.Normalize(UserDirectoryText.Text),
                 EmptyToNull(PathUtility.Normalize(GameLibraryText.Text)),

@@ -83,7 +83,7 @@
                                     <TextBlock x:Name="HealthSummaryText" Text="Checking the current RB4 and shadPS4 setup…"
                                                Foreground="{StaticResource MutedTextBrush}" Margin="0,5,18,0" TextWrapping="Wrap" />
                                 </StackPanel>
-                                <Button Grid.Column="1" Content="Run again" Style="{StaticResource SecondaryButton}"
+                                <Button x:Name="RunHealthCheckButton" Grid.Column="1" Content="Run again" Style="{StaticResource SecondaryButton}"
                                         VerticalAlignment="Center" Click="RunHealthCheck" />
                             </Grid>
 
