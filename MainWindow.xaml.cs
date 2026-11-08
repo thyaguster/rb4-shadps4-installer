@@ -18,6 +18,7 @@ public partial class MainWindow : Window
     private InstalledGame? _detectedGame;
     private bool _settingsVisible;
     private bool _creditsVisible;
+    private bool _installedContentVisible;
     private bool _isFirstRun;
     private bool _showUpdatePanel;
     private bool _showDeluxePanel;
@@ -27,6 +28,7 @@ public partial class MainWindow : Window
     private AppRelease? _latestAppRelease;
     private bool _checkingForAppUpdates;
     private bool _downloadingAppUpdate;
+    private IReadOnlyList<InstalledContentItem> _installedContent = [];
 
     public MainWindow()
     {
@@ -127,6 +129,7 @@ public partial class MainWindow : Window
         GameFilesPanel.Visibility = visibility;
         DeluxeMaintenancePanel.Visibility = Visibility.Collapsed;
         AddonPanel.Visibility = visibility;
+        ContentRequirementPanel.Visibility = Visibility.Collapsed;
         BackupCheck.Visibility = visibility;
         InstallButton.Visibility = visibility;
     }
@@ -153,6 +156,7 @@ public partial class MainWindow : Window
     private void ToggleSettings(object sender, RoutedEventArgs e)
     {
         _creditsVisible = false;
+        _installedContentVisible = false;
         _settingsVisible = !_settingsVisible;
         if (!_settingsVisible) SavePreferences();
         UpdateSettingsVisibility();
@@ -166,7 +170,18 @@ public partial class MainWindow : Window
     private void ToggleCredits(object sender, RoutedEventArgs e)
     {
         _settingsVisible = false;
+        _installedContentVisible = false;
         _creditsVisible = !_creditsVisible;
+        UpdateSettingsVisibility();
+        Dispatcher.BeginInvoke(new Action(MainScrollViewer.ScrollToTop));
+    }
+
+    private void ToggleInstalledContent(object sender, RoutedEventArgs e)
+    {
+        _settingsVisible = false;
+        _creditsVisible = false;
+        _installedContentVisible = !_installedContentVisible;
+        if (_installedContentVisible) RefreshInstalledContent();
         UpdateSettingsVisibility();
         Dispatcher.BeginInvoke(new Action(MainScrollViewer.ScrollToTop));
     }
@@ -176,6 +191,7 @@ public partial class MainWindow : Window
         if (LocationsPanel is null || ExtractorPanel is null) return;
         var settingsView = !_isFirstRun && _settingsVisible;
         var creditsView = !_isFirstRun && _creditsVisible;
+        var installedContentView = !_isFirstRun && _installedContentVisible;
         var show = _isFirstRun || settingsView;
         LocationsPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         ExtractorPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
@@ -184,13 +200,18 @@ public partial class MainWindow : Window
         BackupPanel.Visibility = settingsView ? Visibility.Visible : Visibility.Collapsed;
         SettingsBanner.Visibility = settingsView ? Visibility.Visible : Visibility.Collapsed;
         CreditsPanel.Visibility = creditsView ? Visibility.Visible : Visibility.Collapsed;
+        InstalledContentPanel.Visibility = installedContentView ? Visibility.Visible : Visibility.Collapsed;
         SettingsButton.Content = settingsView ? "←  Back to installer" : "⚙  Settings";
         SettingsButton.Style = (Style)FindResource(settingsView ? "PrimaryButton" : "SecondaryButton");
         CreditsButton.Content = creditsView ? "←  Back to installer" : "♥  Credits";
         CreditsButton.Style = (Style)FindResource(creditsView ? "PrimaryButton" : "SecondaryButton");
+        InstalledContentButton.Content = installedContentView
+            ? "←  Back to installer"
+            : _detectedGame is null ? "♫  Content" : $"♫  Content ({_detectedGame.AddonCount:N0})";
+        InstalledContentButton.Style = (Style)FindResource(installedContentView ? "PrimaryButton" : "SecondaryButton");
         if (settingsView) RefreshLatestBackup();
 
-        if (settingsView || creditsView)
+        if (settingsView || creditsView || installedContentView)
         {
             ShowWorkflow(false);
             DetectedInstallPanel.Visibility = Visibility.Collapsed;
@@ -225,8 +246,10 @@ public partial class MainWindow : Window
             GameFilesPanel.Visibility = hideGameUpdateFields || hideInstalledDeluxeFields
                 ? Visibility.Collapsed : Visibility.Visible;
             DeluxeMaintenancePanel.Visibility = hideInstalledDeluxeFields ? Visibility.Visible : Visibility.Collapsed;
-            AddonPanel.Visibility = deluxeMode ? Visibility.Collapsed : Visibility.Visible;
-            InstallButton.IsEnabled = !hideInstalledDeluxeFields;
+            var contentLocked = !deluxeMode && _detectedGame?.DeluxeInstalled != true;
+            AddonPanel.Visibility = deluxeMode || contentLocked ? Visibility.Collapsed : Visibility.Visible;
+            ContentRequirementPanel.Visibility = contentLocked ? Visibility.Visible : Visibility.Collapsed;
+            InstallButton.IsEnabled = !hideInstalledDeluxeFields && (!contentLocked || _showUpdatePanel);
 
             if (hasDetectedGame)
             {
@@ -358,6 +381,8 @@ public partial class MainWindow : Window
         {
             _detectedGame = null;
             AddonPanelTitle.Text = "DLC & custom songs";
+            InstalledContentButton.Visibility = Visibility.Collapsed;
+            _installedContentVisible = false;
             DetectedInstallPathText.Text = string.Empty;
             DetectedInstallPanel.Visibility = Visibility.Collapsed;
             UpdateSettingsVisibility();
@@ -384,6 +409,8 @@ public partial class MainWindow : Window
         AddonPanelTitle.Text = detected.AddonCount == 0
             ? "DLC & custom songs"
             : $"DLC & custom songs  •  {detected.AddonCount:N0} installed";
+        InstalledContentButton.Content = $"♫  Content ({detected.AddonCount:N0})";
+        InstalledContentButton.Visibility = Visibility.Visible;
         ContentModeRadio.IsChecked = true;
         DetectedInstallPanel.Visibility = Visibility.Visible;
         _settingsVisible = false;
@@ -410,6 +437,72 @@ public partial class MainWindow : Window
         _showDeluxePanel = true;
         UpdateSettingsVisibility();
         Dispatcher.BeginInvoke(new Action(() => GameFilesPanel.BringIntoView()));
+    }
+
+    private void ChooseDeluxeForContent(object sender, RoutedEventArgs e)
+    {
+        DeluxeModeRadio.IsChecked = true;
+        _showDeluxePanel = true;
+        UpdateSettingsVisibility();
+        Dispatcher.BeginInvoke(new Action(() => GameFilesPanel.BringIntoView()));
+    }
+
+    private void RefreshInstalledContent(object sender, RoutedEventArgs e) => RefreshInstalledContent();
+
+    private void RefreshInstalledContent()
+    {
+        var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
+        var addonDirectory = PathUtility.Normalize(AddonDirectoryText.Text);
+        _installedContent = InstalledContentScanner.Find(addonDirectory, titleId);
+        var customCount = _installedContent.Count(item => item.IsCustomSong);
+        var addonCount = _installedContent.Count - customCount;
+        var breakdown = customCount > 0 && addonCount > 0
+            ? $"{customCount:N0} custom song{(customCount == 1 ? string.Empty : "s")} and {addonCount:N0} other add-on{(addonCount == 1 ? string.Empty : "s")}"
+            : customCount > 0
+                ? $"{customCount:N0} custom song{(customCount == 1 ? string.Empty : "s")}"
+                : $"{addonCount:N0} DLC/add-on item{(addonCount == 1 ? string.Empty : "s")}";
+        InstalledContentSummaryText.Text = $"{breakdown} installed for {titleId}. Titles come from package metadata.";
+        ApplyInstalledContentFilter();
+    }
+
+    private void FilterInstalledContent(object sender, TextChangedEventArgs e)
+    {
+        if (!IsInitialized || InstalledContentList is null) return;
+        ApplyInstalledContentFilter();
+    }
+
+    private void ApplyInstalledContentFilter()
+    {
+        var query = InstalledContentFilterText?.Text.Trim() ?? string.Empty;
+        var filtered = string.IsNullOrWhiteSpace(query)
+            ? _installedContent
+            : _installedContent.Where(item =>
+                item.Name.Contains(query, StringComparison.CurrentCultureIgnoreCase) ||
+                item.ContentId.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                item.Folder.Contains(query, StringComparison.OrdinalIgnoreCase)).ToArray();
+        InstalledContentList.ItemsSource = filtered;
+        NoInstalledContentText.Text = _installedContent.Count == 0
+            ? "No installed DLC or custom-song folders were found for this game."
+            : "No installed content matches that filter.";
+        NoInstalledContentText.Visibility = filtered.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        OpenInstalledContentFolderButton.IsEnabled = false;
+    }
+
+    private void InstalledContentSelectionChanged(object sender, SelectionChangedEventArgs e) =>
+        OpenInstalledContentFolderButton.IsEnabled = InstalledContentList.SelectedItem is InstalledContentItem;
+
+    private void OpenInstalledContentFolder(object sender, RoutedEventArgs e)
+    {
+        if (InstalledContentList.SelectedItem is not InstalledContentItem item || !Directory.Exists(item.Folder)) return;
+        Process.Start(new ProcessStartInfo(item.Folder) { UseShellExecute = true });
+    }
+
+    private void OpenAddonDirectory(object sender, RoutedEventArgs e)
+    {
+        var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
+        var root = Path.Combine(PathUtility.Normalize(AddonDirectoryText.Text), titleId);
+        if (!Directory.Exists(root)) root = PathUtility.Normalize(AddonDirectoryText.Text);
+        if (Directory.Exists(root)) Process.Start(new ProcessStartInfo(root) { UseShellExecute = true });
     }
 
     private void UserDirectoryChanged(object sender, TextChangedEventArgs e)
@@ -903,6 +996,7 @@ public partial class MainWindow : Window
         var mode = ContentModeRadio.IsChecked == true
             ? InstallMode.Content
             : DeluxeModeRadio.IsChecked == true ? InstallMode.Deluxe : InstallMode.Standard;
+        var contentUnlocked = _detectedGame?.DeluxeInstalled == true;
         return new InstallRequest(
             mode,
             PathUtility.Normalize(UserDirectoryText.Text),
@@ -912,7 +1006,7 @@ public partial class MainWindow : Window
             EmptyToNull(PathUtility.Normalize(DeluxeSourceText.Text)),
             EmptyToNull(PathUtility.Normalize(PackageExtractorText.Text)),
             PathUtility.Normalize(AddonDirectoryText.Text),
-            mode == InstallMode.Deluxe
+            mode == InstallMode.Deluxe || !contentUnlocked
                 ? []
                 : AddonSourcesList.Items.Cast<string>().Select(PathUtility.Normalize).ToArray(),
             titleId,

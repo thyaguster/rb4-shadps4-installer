@@ -55,9 +55,11 @@
                 <StackPanel>
                     <TextBlock Text="Install Rock Band 4" FontSize="30" FontWeight="Bold" />
                     <TextBlock Text="Set up the standard game or add RB4 Deluxe to an existing shadPS4 library."
-                               Foreground="{StaticResource MutedTextBrush}" Margin="0,7,0,0" />
+                               Foreground="{StaticResource MutedTextBrush}" Margin="0,7,18,0" TextWrapping="Wrap" />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="InstalledContentButton" Content="♫  Content" Style="{StaticResource SecondaryButton}"
+                            Margin="0,0,8,0" Visibility="Collapsed" Click="ToggleInstalledContent" />
                     <Button x:Name="CreditsButton" Content="♥  Credits" Style="{StaticResource SecondaryButton}"
                             Margin="0,0,8,0" Click="ToggleCredits" />
                     <Button x:Name="SettingsButton" Content="⚙  Settings" Style="{StaticResource SecondaryButton}"
@@ -127,6 +129,54 @@
                                     <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0">Original creators of Rock Band 4 and the Rock Band series.  <Hyperlink NavigateUri="https://www.harmonixmusic.com/games/rock-band/rb4/" RequestNavigate="OpenLink">Rock Band 4 ↗</Hyperlink></TextBlock>
                                 </StackPanel>
                             </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <Border x:Name="InstalledContentPanel" Background="{StaticResource PanelBrush}"
+                            BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1"
+                            CornerRadius="12" Padding="24" Visibility="Collapsed">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Installed content" FontSize="26" FontWeight="Bold" />
+                                    <TextBlock x:Name="InstalledContentSummaryText"
+                                               Foreground="{StaticResource MutedTextBrush}" Margin="0,5,18,0" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Refresh" Style="{StaticResource SecondaryButton}"
+                                        VerticalAlignment="Center" Click="RefreshInstalledContent" />
+                            </Grid>
+
+                            <TextBlock Text="Filter installed content" Foreground="{StaticResource MutedTextBrush}"
+                                       FontSize="12" Margin="0,18,0,5" />
+                            <TextBox x:Name="InstalledContentFilterText" Margin="0,0,0,10"
+                                     ToolTip="Filter by title or content ID" TextChanged="FilterInstalledContent" />
+                            <ListBox x:Name="InstalledContentList" Height="330"
+                                     Background="#0F1219" BorderBrush="{StaticResource PanelBorderBrush}"
+                                     HorizontalContentAlignment="Stretch" SelectionChanged="InstalledContentSelectionChanged">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="9,7" ToolTip="{Binding Folder}">
+                                            <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding Details}" Foreground="{StaticResource MutedTextBrush}"
+                                                           FontSize="11" Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding Kind}" Foreground="{StaticResource SuccessBrush}"
+                                                       FontSize="11" VerticalAlignment="Center" Margin="16,0,0,0" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <TextBlock x:Name="NoInstalledContentText" Text="No installed DLC or custom-song folders were found for this game."
+                                       Foreground="{StaticResource MutedTextBrush}" Margin="0,12,0,0" Visibility="Collapsed" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                <Button x:Name="OpenInstalledContentFolderButton" Content="Open selected folder"
+                                        Style="{StaticResource SecondaryButton}" IsEnabled="False" Click="OpenInstalledContentFolder" />
+                                <Button Content="Open all content" Style="{StaticResource SecondaryButton}"
+                                        Margin="8,0,0,0" Click="OpenAddonDirectory" />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 
@@ -424,6 +474,20 @@
                         </StackPanel>
                     </Border>
 
+                    <Border x:Name="ContentRequirementPanel" Background="#261B12" BorderBrush="#A96A2A"
+                            BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,14,0,0" Visibility="Collapsed">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,18,0">
+                                <TextBlock Text="RB4DX is required for content imports" FontWeight="SemiBold" FontSize="15" />
+                                <TextBlock Text="Custom songs do not work with standard RB4. Because mixed PKG folders cannot be reliably separated into official DLC and customs before extraction, content imports stay locked until RB4DX is detected. Game updates remain available."
+                                           Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,5,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Install RB4 Deluxe" Style="{StaticResource PrimaryButton}"
+                                    VerticalAlignment="Center" Click="ChooseDeluxeForContent" />
+                        </Grid>
+                    </Border>
+
                     <Border x:Name="AddonPanel" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,14,0,0">
                         <StackPanel>
                             <TextBlock x:Name="AddonPanelTitle" Text="DLC &amp; custom songs" FontWeight="SemiBold" FontSize="15" />
@@ -433,7 +497,14 @@
                                      Foreground="{StaticResource TextBrush}" BorderBrush="{StaticResource PanelBorderBrush}"
                                      SelectionMode="Extended" HorizontalContentAlignment="Stretch"
                                      AllowDrop="True" PreviewDragOver="AddonDragOver" Drop="DropAddons"
-                                     ToolTip="Drop one or more DLC/custom-song PKGs or extracted folders here" />
+                                     ToolTip="Drop one or more DLC/custom-song PKGs or extracted folders here">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Converter={StaticResource PathFileNameConverter}}"
+                                                   ToolTip="{Binding}" TextTrimming="CharacterEllipsis" Margin="6,3" />
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,9,0,0">
                                 <Button Content="Add PKGs" Style="{StaticResource SecondaryButton}" Click="AddAddonPackages" />
                                 <Button Content="Add PKG folder" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="AddAddonPackageFolder" />

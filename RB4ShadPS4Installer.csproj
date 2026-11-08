@@ -17,10 +17,10 @@
     <NeutralLanguage>en</NeutralLanguage>
     <ApplicationIcon Condition="Exists('Assets/app.ico')">Assets/app.ico</ApplicationIcon>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <Version>0.8.10</Version>
-    <FileVersion>0.8.10.0</FileVersion>
-    <AssemblyVersion>0.8.10.0</AssemblyVersion>
-    <InformationalVersion>0.8.10</InformationalVersion>
+    <Version>0.8.11</Version>
+    <FileVersion>0.8.11.0</FileVersion>
+    <AssemblyVersion>0.8.11.0</AssemblyVersion>
+    <InformationalVersion>0.8.11</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Assets\app-icon.png" />
