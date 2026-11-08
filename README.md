@@ -41,7 +41,7 @@
 | **Firmware setup** | Validates and imports decrypted `.sprx` modules plus dumped `font` and `font2` folders from the user's own PS4 |
 | **Existing installs** | Detects region, game version, Deluxe, and installed add-ons |
 | **Setup health** | Checks emulator/profile alignment, RB4 2.21, RB4DX, modules, fonts, disk space, and the latest launch log; exports redacted support bundles |
-| **Safety** | SHA-256 checks, validation, backups, rollback, and install logs |
+| **Safety** | SHA-256 checks, integrity-protected backups, rollback, and install logs |
 | **Convenience** | Drag-and-drop, remembered paths, desktop shortcuts, and verified self-updates |
 
 Supported game regions:
@@ -80,6 +80,7 @@ For detailed instructions, path explanations, maintenance workflows, and trouble
   </tr>
   <tr>
     <td width="50%"><img src="docs/screenshots/updates.png" alt="Application update settings"><br><strong>Verified automatic and manual application updates</strong></td>
+    <td width="50%"><img src="docs/screenshots/backups.png" alt="Recovery backup manager"><br><strong>SHA-256-protected recovery backups</strong></td>
   </tr>
 </table>
 

@@ -36,4 +36,8 @@ To uninstall content, select one or more installed items and choose **Move selec
 
 With backups enabled, overwritten files are preserved before installation. If an operation fails after changes begin, the installer attempts to restore the previous state and records details in the installation log.
 
+New recovery backups store the original size and SHA-256 checksum of every protected file. Open **Settings → Recovery backups** and choose **Verify integrity** to check a selected backup without changing the installation. Restore performs the same complete check before it modifies any destination, so a missing, truncated, or altered backup file stops the operation safely.
+
+Backups created by versions before 0.8.19 remain available and receive structural checks for required files and safe paths. They are labeled **legacy backup** because their older manifests do not contain cryptographic checksums.
+
 Close shadPS4 before changing game files, restoring a backup, or updating a managed emulator build.

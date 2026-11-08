@@ -1106,7 +1106,38 @@ public partial class MainWindow : Window
         var selected = _latestBackup is not null;
         RestoreLatestBackupButton.IsEnabled = selected;
         OpenBackupFolderButton.IsEnabled = selected;
+        VerifyBackupButton.IsEnabled = selected;
         DeleteBackupButton.IsEnabled = selected;
+    }
+
+    private async void VerifySelectedBackup(object sender, RoutedEventArgs e)
+    {
+        if (_latestBackup is null) return;
+        var backup = _latestBackup;
+        VerifyBackupButton.IsEnabled = false;
+        RestoreLatestBackupButton.IsEnabled = false;
+        InstallProgressBar.Visibility = Visibility.Visible;
+        InstallProgressBar.Value = 0;
+        var progress = new Progress<InstallProgress>(value =>
+        {
+            InstallProgressBar.Value = value.Percent;
+            ShowStatus(value.Message, false);
+        });
+        try
+        {
+            var result = await BackupService.ValidateAsync(backup, progress, CancellationToken.None);
+            ShowStatus(result.Message, !result.IsValid, success: result.IsValid && result.IsCryptographicallyVerified);
+        }
+        catch (Exception ex)
+        {
+            _lastErrorDetails = ex.ToString();
+            ShowStatus("Backup verification failed: " + ex.Message, true);
+        }
+        finally
+        {
+            InstallProgressBar.Visibility = Visibility.Collapsed;
+            UpdateBackupSelection();
+        }
     }
 
     private void OpenBackupFolder(object sender, RoutedEventArgs e)
@@ -1147,6 +1178,7 @@ public partial class MainWindow : Window
 
         RestoreLatestBackupButton.IsEnabled = false;
         OpenBackupFolderButton.IsEnabled = false;
+        VerifyBackupButton.IsEnabled = false;
         InstallProgressBar.Visibility = Visibility.Visible;
         InstallProgressBar.Value = 0;
         var progress = new Progress<InstallProgress>(value =>

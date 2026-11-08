@@ -610,7 +610,7 @@
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock Text="Recovery backups" FontWeight="SemiBold" FontSize="15" VerticalAlignment="Center" />
-                                <Button Grid.Column="1" Content="Refresh" Style="{StaticResource SecondaryButton}" Click="RefreshBackups" />
+                                <Button Grid.Column="1" Content="Refresh list" Style="{StaticResource SecondaryButton}" Click="RefreshBackups" />
                             </Grid>
                             <TextBlock Text="Backups retained after successful installations can restore every file changed by that installation."
                                        Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,5,0,12" TextWrapping="Wrap" />
@@ -631,6 +631,8 @@
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
                                 <Button x:Name="OpenBackupFolderButton" Content="Open folder" Style="{StaticResource SecondaryButton}"
                                         IsEnabled="False" Click="OpenBackupFolder" />
+                                <Button x:Name="VerifyBackupButton" Content="Verify integrity" Style="{StaticResource SecondaryButton}"
+                                        IsEnabled="False" Margin="8,0,0,0" Click="VerifySelectedBackup" />
                                 <Button x:Name="DeleteBackupButton" Content="Delete selected" Style="{StaticResource SecondaryButton}"
                                         IsEnabled="False" Margin="8,0,0,0" Click="DeleteSelectedBackup" />
                                 <Button x:Name="RestoreLatestBackupButton" Content="Restore selected" Style="{StaticResource PrimaryButton}"

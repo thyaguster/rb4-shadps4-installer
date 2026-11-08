@@ -18,7 +18,7 @@
             </Border>
             <StackPanel Grid.Row="1" Margin="30,24,30,24">
                 <TextBlock Text="Restore this backup?" FontSize="24" FontWeight="Bold" />
-                <TextBlock Text="Close shadPS4 before continuing. Current versions of affected files will be protected while the restore runs."
+                <TextBlock Text="Close shadPS4 before continuing. The backup is verified before any file is changed, and current versions of affected files are protected while the restore runs."
                            Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,7,0,18" />
                 <Border Background="#10141B" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="9" Padding="15">
                     <Grid>

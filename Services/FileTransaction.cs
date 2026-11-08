@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Security.Cryptography;
 
 namespace RB4ShadPS4Installer.Services;
 
@@ -41,8 +42,19 @@ internal sealed class FileTransaction : IDisposable
         if (_finished) return;
         if (_persistent)
         {
+            var protectedEntries = _entries.Select(entry =>
+            {
+                if (!entry.Existed || string.IsNullOrWhiteSpace(entry.BackupRelativePath)) return entry;
+                var path = Path.Combine(_root, entry.BackupRelativePath);
+                using var stream = File.OpenRead(path);
+                return entry with
+                {
+                    BackupLength = stream.Length,
+                    BackupSha256 = Convert.ToHexString(SHA256.HashData(stream))
+                };
+            }).ToArray();
             var manifest = new BackupManifest(
-                1, _titleId, DateTimeOffset.Now, "Complete", _entries);
+                2, _titleId, DateTimeOffset.Now, "Complete", protectedEntries);
             File.WriteAllText(Path.Combine(_root, "manifest.json"),
                 JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
         }
@@ -96,7 +108,12 @@ internal sealed class FileTransaction : IDisposable
     }
 }
 
-internal sealed record BackupEntry(string Destination, string? BackupRelativePath, bool Existed);
+internal sealed record BackupEntry(
+    string Destination,
+    string? BackupRelativePath,
+    bool Existed,
+    long? BackupLength = null,
+    string? BackupSha256 = null);
 internal sealed record BackupManifest(
     int FormatVersion,
     string TitleId,
