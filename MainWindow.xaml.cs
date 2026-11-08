@@ -251,8 +251,12 @@ public partial class MainWindow : Window
         HealthResultsList.ItemsSource = null;
         try
         {
+            var progress = new Progress<string>(message =>
+            {
+                if (!cancellation.IsCancellationRequested) HealthSummaryText.Text = message;
+            });
             var report = await Task.Run(() => InstallationHealthService.Run(
-                applicationDirectory, userDirectory, gameLibrary, addonDirectory, titleId, cancellation.Token),
+                applicationDirectory, userDirectory, gameLibrary, addonDirectory, titleId, progress, cancellation.Token),
                 cancellation.Token);
             _healthReport = report;
             ApplyHealthReport(report);

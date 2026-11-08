@@ -11,10 +11,12 @@ internal static partial class InstallationHealthService
         string? gameLibrary,
         string addonDirectory,
         string preferredTitleId,
+        IProgress<string>? progress,
         CancellationToken token)
     {
         var results = new List<HealthCheckResult>();
         token.ThrowIfCancellationRequested();
+        progress?.Report("Checking the shadPS4 application and profile…");
         var launcher = ShadPs4Locator.FindLauncherExecutable(applicationDirectory);
         results.Add(launcher is null
             ? Error("Emulator application", "No shadPS4 launcher or emulator executable was found.", "Choose or download a valid shadPS4 installation in Settings.")
@@ -45,6 +47,7 @@ internal static partial class InstallationHealthService
             ? Pass("shadPS4 configuration", "config.json is present in the selected user folder.")
             : Warn("shadPS4 configuration", "config.json was not found in the selected user folder.", "Run the selected shadPS4 launcher once, then rerun this check."));
 
+        progress?.Report("Checking Rock Band 4, its update, and RB4 Deluxe…");
         token.ThrowIfCancellationRequested();
         var games = ShadPs4Locator.FindInstalledGames(userDirectory, gameLibrary);
         var game = games.FirstOrDefault(value => value.TitleId == preferredTitleId) ?? games.FirstOrDefault();
@@ -64,10 +67,12 @@ internal static partial class InstallationHealthService
                 : Warn("Rock Band 4 Deluxe", "RB4DX data or its plugin is missing.", "Install or repair RB4 Deluxe before importing custom songs."));
             results.Add(new HealthCheckResult(HealthCheckStatus.Information, "Installed content",
                 game.AddonCount == 1 ? "1 add-on folder is installed." : $"{game.AddonCount:N0} add-on folders are installed."));
-            AddContentAuditResult(results, addonDirectory, game.TitleId, token);
+            progress?.Report("Auditing installed DLC and custom songs…");
+            AddContentAuditResult(results, addonDirectory, game.TitleId, progress, token);
         }
 
         token.ThrowIfCancellationRequested();
+        progress?.Report("Checking firmware modules and system fonts…");
         var moduleStatus = FirmwareModuleService.GetStatus(ShadPs4Locator.FindSysModulesDirectory(userDirectory));
         results.Add(moduleStatus.SupportedInstalled > 0
             ? Pass("Firmware modules", $"{moduleStatus.SupportedInstalled:N0} of {moduleStatus.SupportedTotal:N0} recognized modules are installed" +
@@ -86,6 +91,7 @@ internal static partial class InstallationHealthService
             ? Pass("Additional-content path", addonDirectory)
             : Warn("Additional-content path", "The configured add-on directory does not exist yet: " + addonDirectory, "It will be created during the first content installation, or can be changed in Settings."));
 
+        progress?.Report("Checking storage and the latest shadPS4 launch log…");
         AddFreeSpaceResult(results, gameLibrary);
         AddLogResults(results, userDirectory, token);
         token.ThrowIfCancellationRequested();
@@ -129,7 +135,12 @@ internal static partial class InstallationHealthService
         }
     }
 
-    private static void AddContentAuditResult(List<HealthCheckResult> results, string addonDirectory, string titleId, CancellationToken token)
+    private static void AddContentAuditResult(
+        List<HealthCheckResult> results,
+        string addonDirectory,
+        string titleId,
+        IProgress<string>? progress,
+        CancellationToken token)
     {
         if (!PathUtility.IsUsableAbsolutePath(addonDirectory))
         {
@@ -140,7 +151,8 @@ internal static partial class InstallationHealthService
 
         try
         {
-            var audit = ContentAuditService.Audit(addonDirectory, titleId, null, token);
+            var auditProgress = progress is null ? null : new ContentAuditProgress(progress);
+            var audit = ContentAuditService.Audit(addonDirectory, titleId, auditProgress, token);
             var noteworthy = audit.Findings
                 .Where(finding => finding.Severity is ContentAuditSeverity.Error or ContentAuditSeverity.Warning)
                 .Take(5)
@@ -242,6 +254,11 @@ internal static partial class InstallationHealthService
     private static HealthCheckResult Pass(string title, string detail) => new(HealthCheckStatus.Passed, title, detail);
     private static HealthCheckResult Warn(string title, string detail, string? recommendation = null) => new(HealthCheckStatus.Warning, title, detail, recommendation);
     private static HealthCheckResult Error(string title, string detail, string? recommendation = null) => new(HealthCheckStatus.Error, title, detail, recommendation);
+
+    private sealed class ContentAuditProgress(IProgress<string> target) : IProgress<InstallProgress>
+    {
+        public void Report(InstallProgress value) => target.Report(value.Message);
+    }
 
     [GeneratedRegex(@"\b(?<key>Revision|Branch)\s+(?<value>[^\r\n]+)$", RegexOptions.IgnoreCase)]
     private static partial Regex KeyValueRegex();

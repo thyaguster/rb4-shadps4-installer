@@ -17,6 +17,9 @@
 
 # Local tools, packages, logs, and temporary files
 tools/
+!tools/
+tools/*
+!tools/capture-screenshots.ps1
 *.log
 *.tmp
 *.zip
