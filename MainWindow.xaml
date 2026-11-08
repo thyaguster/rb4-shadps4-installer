@@ -77,7 +77,7 @@
                             CornerRadius="12" Padding="24" Visibility="Collapsed">
                         <StackPanel>
                             <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <StackPanel>
                                     <TextBlock Text="Setup health" FontSize="26" FontWeight="Bold" />
                                     <TextBlock x:Name="HealthSummaryText" Text="Checking the current RB4 and shadPS4 setup…"
@@ -197,9 +197,12 @@
                                     <TextBlock x:Name="InstalledContentSummaryText"
                                                Foreground="{StaticResource MutedTextBrush}" Margin="0,5,18,0" TextWrapping="Wrap" />
                                 </StackPanel>
-                                <Button x:Name="ExportContentCatalogButton" Grid.Column="1" Content="Export catalog" Style="{StaticResource SecondaryButton}"
+                                <Button x:Name="AuditContentLibraryButton" Grid.Column="1" Content="Audit library" Style="{StaticResource SecondaryButton}"
+                                        VerticalAlignment="Center" Click="AuditInstalledContent" />
+                                <Button x:Name="ExportContentCatalogButton" Grid.Column="2" Content="Export catalog" Style="{StaticResource SecondaryButton}"
+                                        Margin="8,0,0,0"
                                         VerticalAlignment="Center" IsEnabled="False" Click="ExportInstalledContentCatalog" />
-                                <Button Grid.Column="2" Content="Refresh" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0"
+                                <Button Grid.Column="3" Content="Refresh" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0"
                                         VerticalAlignment="Center" Click="RefreshInstalledContent" />
                             </Grid>
 

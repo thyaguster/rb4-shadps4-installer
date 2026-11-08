@@ -36,7 +36,7 @@
 |---|---|
 | **Game setup** | Base game and updates from user-provided PKGs or extracted folders |
 | **RB4 Deluxe** | Download, install, detect, repair, and update |
-| **Extra content** | One manager for importing, searching, catalog export, opening, and safely removing DLC/custom songs, with duplicate-import protection |
+| **Extra content** | One manager for importing, searching, auditing, catalog export, opening, and safely removing DLC/custom songs, with duplicate-import protection |
 | **shadPS4** | Isolated LlysiX RB4 profile or a user-selected existing installation |
 | **Firmware setup** | Validates and imports decrypted `.sprx` modules plus dumped `font` and `font2` folders from the user's own PS4 |
 | **Existing installs** | Detects region, game version, Deluxe, and installed add-ons |

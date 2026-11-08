@@ -635,6 +635,40 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void AuditInstalledContent(object sender, RoutedEventArgs e)
+    {
+        var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
+        var addonDirectory = PathUtility.Normalize(AddonDirectoryText.Text);
+        AuditContentLibraryButton.IsEnabled = false;
+        InstallProgressBar.Visibility = Visibility.Visible;
+        InstallProgressBar.Value = 0;
+        var progress = new Progress<InstallProgress>(value =>
+        {
+            InstallProgressBar.Value = value.Percent;
+            ShowStatus(value.Message, false);
+        });
+        try
+        {
+            var report = await Task.Run(() =>
+                ContentAuditService.Audit(addonDirectory, titleId, progress, CancellationToken.None));
+            InstallProgressBar.Value = 100;
+            var dialog = new ContentAuditWindow(report) { Owner = this };
+            dialog.ShowDialog();
+            ShowStatus(report.Passed ? "Content audit completed with no issues." : report.Summary,
+                report.ErrorCount > 0, success: report.Passed);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or OperationCanceledException)
+        {
+            _lastErrorDetails = ex.ToString();
+            ShowStatus("Could not audit the installed-content library: " + ex.Message, true);
+        }
+        finally
+        {
+            InstallProgressBar.Visibility = Visibility.Collapsed;
+            AuditContentLibraryButton.IsEnabled = true;
+        }
+    }
+
     private void FilterInstalledContent(object sender, TextChangedEventArgs e)
     {
         if (!IsInitialized || InstalledContentList is null) return;

@@ -28,7 +28,7 @@ The **Add PKG folder** picker displays folders rather than individual files. Sel
 
 ## An update or add-on does not appear in shadPS4
 
-Restart shadPS4 after installation so it can rescan the library. Recheck the game library, user folder, and additional-content directory in Settings.
+Open **Content → Audit library** first. The read-only audit checks package metadata, region, duplicate content IDs, empty folders, and unsafe linked directories; use **Copy report** to retain the result. Then restart shadPS4 so it can rescan the library and recheck the game library, user folder, and additional-content directory in Settings.
 
 ## RB4DX installs but the game still looks unmodified
 
