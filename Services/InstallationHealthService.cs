@@ -61,6 +61,7 @@ internal static partial class InstallationHealthService
                 : Warn("Rock Band 4 Deluxe", "RB4DX data or its plugin is missing.", "Install or repair RB4 Deluxe before importing custom songs."));
             results.Add(new HealthCheckResult(HealthCheckStatus.Information, "Installed content",
                 game.AddonCount == 1 ? "1 add-on folder is installed." : $"{game.AddonCount:N0} add-on folders are installed."));
+            AddContentAuditResult(results, addonDirectory, game.TitleId);
         }
 
         var moduleStatus = FirmwareModuleService.GetStatus(ShadPs4Locator.FindSysModulesDirectory(userDirectory));
@@ -120,6 +121,43 @@ internal static partial class InstallationHealthService
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
             results.Add(Warn("Free disk space", "Could not inspect the game-library drive: " + ex.Message));
+        }
+    }
+
+    private static void AddContentAuditResult(List<HealthCheckResult> results, string addonDirectory, string titleId)
+    {
+        if (!PathUtility.IsUsableAbsolutePath(addonDirectory))
+        {
+            results.Add(Warn("Installed-content audit", "The configured add-on path is not a usable absolute directory.",
+                "Correct the additional-content path in Settings, then rerun Setup health."));
+            return;
+        }
+
+        try
+        {
+            var audit = ContentAuditService.Audit(addonDirectory, titleId, null, CancellationToken.None);
+            var noteworthy = audit.Findings
+                .Where(finding => finding.Severity is ContentAuditSeverity.Error or ContentAuditSeverity.Warning)
+                .Take(5)
+                .Select(finding => $"{finding.Severity}: {finding.Title}" +
+                    (string.IsNullOrWhiteSpace(finding.Folder) ? string.Empty : $" ({Path.GetFileName(finding.Folder)})"))
+                .ToArray();
+            var detail = audit.Summary;
+            if (noteworthy.Length > 0) detail += " " + string.Join("; ", noteworthy) +
+                (audit.ErrorCount + audit.WarningCount > noteworthy.Length ? "; additional findings omitted." : ".");
+
+            results.Add(audit.ErrorCount > 0
+                ? Error("Installed-content audit", detail, "Open Content → Audit library for the complete report before launching the game.")
+                : audit.WarningCount > 0
+                    ? Warn("Installed-content audit", detail, "Open Content → Audit library to review the warnings.")
+                    : Pass("Installed-content audit", audit.ScannedFolders == 0
+                        ? "No installed DLC/custom-song folders need auditing."
+                        : audit.Summary));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            results.Add(Warn("Installed-content audit", "Could not inspect the installed-content library: " + ex.Message,
+                "Open Content → Audit library for a focused report."));
         }
     }
 

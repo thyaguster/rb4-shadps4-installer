@@ -14,8 +14,8 @@ internal static class ContentAuditService
         var findings = new List<ContentAuditFinding>();
         if (!Directory.Exists(root))
         {
-            findings.Add(new(ContentAuditSeverity.Error, "Content directory is missing",
-                "The configured add-on directory does not contain a folder for the selected game region.", root));
+            findings.Add(new(ContentAuditSeverity.Info, "No installed content folder",
+                "No per-game add-on folder exists yet. This is normal when no DLC or custom songs are installed.", root));
             return new(titleId, root, 0, findings);
         }
 
