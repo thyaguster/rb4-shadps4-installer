@@ -38,6 +38,7 @@
 | **RB4 Deluxe** | Download, install, detect, repair, and update |
 | **Extra content** | RB4DX-gated imports plus a searchable installed DLC/custom-song library |
 | **shadPS4** | Isolated LlysiX RB4 profile or a user-selected existing installation |
+| **Firmware modules** | Validates and imports decrypted `.sprx` files dumped from the user's own PS4 |
 | **Existing installs** | Detects region, game version, Deluxe, and installed add-ons |
 | **Safety** | SHA-256 checks, validation, backups, rollback, and install logs |
 | **Convenience** | Drag-and-drop, remembered paths, desktop shortcuts, and verified self-updates |
@@ -74,6 +75,10 @@ For detailed instructions, path explanations, maintenance workflows, and trouble
     <td width="50%"><img src="docs/screenshots/content.png" alt="RB4DX content-import safety check"><br><strong>RB4DX-gated DLC and custom-song imports</strong></td>
     <td width="50%"><img src="docs/screenshots/updates.png" alt="Application update settings"><br><strong>Verified automatic and manual application updates</strong></td>
   </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/firmware.png" alt="PS4 firmware module import settings"><br><strong>Local firmware-module validation and import</strong></td>
+    <td width="50%"></td>
+  </tr>
 </table>
 
 ## Emulator choices
@@ -84,6 +89,12 @@ For detailed instructions, path explanations, maintenance workflows, and trouble
 When upgrading an older installer-managed LlysiX setup, configuration, saves, keys, input profiles, sysmodules, and RB4DX data are copied into the isolated profile. Existing files under `%APPDATA%\shadPS4` are not deleted. The game library remains in its original location and is not duplicated.
 
 The previous managed RB4 build is retained during updates so it can be recovered if necessary.
+
+## Firmware modules
+
+Settings includes an **Import my dump** action for decrypted `.sprx` modules dumped from `/system/common/lib` on a PS4 owned by the user. The importer validates ELF files, reports recognized and additional modules, and installs them in the active profile's `sys_modules` folder. Existing modules are preserved during managed-emulator upgrades.
+
+The project does not download or distribute Sony firmware. Follow the [official shadPS4 dumping guide](https://github.com/shadps4-emu/shadPS4/wiki/I.-Quick-start-%5BUsers%5D#4-dumping-firmware-modules).
 
 ## Application updates
 

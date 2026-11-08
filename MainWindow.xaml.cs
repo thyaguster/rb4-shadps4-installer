@@ -68,6 +68,7 @@ public partial class MainWindow : Window
         EuTitleRadio.IsChecked = saved?.TitleId == "CUSA02901";
         UsaTitleRadio.IsChecked = saved?.TitleId != "CUSA02901";
         RefreshLibraries();
+        RefreshFirmwareModulesStatus();
         if (_isFirstRun) ShowFirstRun();
         else
         {
@@ -194,6 +195,7 @@ public partial class MainWindow : Window
         var installedContentView = !_isFirstRun && _installedContentVisible;
         var show = _isFirstRun || settingsView;
         LocationsPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        FirmwareModulesPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         ExtractorPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         ShortcutPanel.Visibility = settingsView ? Visibility.Visible : Visibility.Collapsed;
         AppUpdatePanel.Visibility = settingsView ? Visibility.Visible : Visibility.Collapsed;
@@ -509,6 +511,7 @@ public partial class MainWindow : Window
     {
         if (!IsInitialized) return;
         RefreshLibraries();
+        RefreshFirmwareModulesStatus();
         if (string.IsNullOrWhiteSpace(AddonDirectoryText.Text) ||
             string.Equals(AddonDirectoryText.Text, _lastAutoAddonDirectory, StringComparison.OrdinalIgnoreCase))
             SetAutoAddonDirectory();
@@ -540,6 +543,77 @@ public partial class MainWindow : Window
         var value = PickFolder("Choose the shadPS4 user folder", UserDirectoryText.Text);
         if (value is not null) UserDirectoryText.Text = value;
     }
+
+    private void RefreshFirmwareModulesStatus()
+    {
+        if (FirmwareModulesStatusText is null) return;
+        var status = FirmwareModuleService.GetStatus(PathUtility.Normalize(UserDirectoryText.Text));
+        var additional = status.AdditionalInstalled > 0
+            ? $"  •  {status.AdditionalInstalled:N0} additional .sprx file{(status.AdditionalInstalled == 1 ? string.Empty : "s")}"
+            : string.Empty;
+        FirmwareModulesStatusText.Text = status.SupportedInstalled == 0
+            ? $"No supported modules installed  •  0 of {status.SupportedTotal}{additional}"
+            : $"{status.SupportedInstalled:N0} of {status.SupportedTotal:N0} supported modules installed{additional}";
+        FirmwareModulesStatusText.Foreground = status.SupportedInstalled > 0
+            ? (System.Windows.Media.Brush)FindResource("SuccessBrush")
+            : (System.Windows.Media.Brush)FindResource("MutedTextBrush");
+        FirmwareModulesStatusText.ToolTip = status.MissingSupported.Count == 0
+            ? "All currently recognized shadPS4 modules are present."
+            : "Missing recognized modules:\n" + string.Join("\n", status.MissingSupported);
+    }
+
+    private void ImportFirmwareModules(object sender, RoutedEventArgs e)
+    {
+        var source = PickFolder("Choose your decrypted PS4 /system/common/lib dump");
+        if (source is null) return;
+        var importable = FirmwareModuleService.FindImportable(source);
+        if (importable.Count == 0)
+        {
+            ShowStatus("No valid ELF .sprx firmware modules were found in that folder or its subfolders.", true);
+            return;
+        }
+
+        var destination = Path.Combine(PathUtility.Normalize(UserDirectoryText.Text), "sys_modules");
+        var confirmation = new ConfirmationWindow(
+            "Import firmware modules",
+            $"Import {importable.Count:N0} dumped module{(importable.Count == 1 ? string.Empty : "s")}?",
+            "Only continue with firmware files dumped from a PlayStation 4 you own. " +
+            "Valid .sprx files will be copied to:\n\n" + destination +
+            "\n\nExisting files with the same names will be replaced. Other files will not be removed.",
+            "Import my dump") { Owner = this };
+        if (confirmation.ShowDialog() != true) return;
+        if (!EnsureShadPs4Closed("import firmware modules")) return;
+
+        try
+        {
+            var result = FirmwareModuleService.Import(source, PathUtility.Normalize(UserDirectoryText.Text));
+            RefreshFirmwareModulesStatus();
+            var extra = result.Additional > 0 ? $" and {result.Additional:N0} additional module(s)" : string.Empty;
+            var skipped = result.SkippedInvalid > 0 ? $" Skipped {result.SkippedInvalid:N0} invalid or encrypted file(s)." : string.Empty;
+            ShowStatus($"Imported {result.Recognized:N0} recognized module(s){extra}.{skipped}", false, success: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ShowStatus("Could not import the firmware modules: " + ex.Message, true);
+        }
+    }
+
+    private void OpenFirmwareModulesFolder(object sender, RoutedEventArgs e)
+    {
+        var directory = Path.Combine(PathUtility.Normalize(UserDirectoryText.Text), "sys_modules");
+        try
+        {
+            Directory.CreateDirectory(directory);
+            Process.Start(new ProcessStartInfo(directory) { UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ShowStatus("Could not open the firmware modules folder: " + ex.Message, true);
+        }
+    }
+
+    private void OpenFirmwareGuide(object sender, RoutedEventArgs e) =>
+        Process.Start(new ProcessStartInfo(FirmwareModuleService.OfficialGuideUrl) { UseShellExecute = true });
 
     private void BrowseShadPs4Install(object sender, RoutedEventArgs e)
     {

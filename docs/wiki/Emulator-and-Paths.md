@@ -19,6 +19,12 @@ The installer-managed LlysiX build instead uses a portable `user` folder beside 
 
 When the managed LlysiX build is updated, this portable profile is copied into the staged new build before the emulator folders are swapped. The preceding build and its original profile remain in the managed `-previous` recovery folder.
 
+## Firmware modules
+
+Open **Settings → PS4 firmware modules** to see how many currently recognized modules are installed. **Import my dump** recursively scans a user-selected folder, accepts decrypted ELF `.sprx` files, and copies them into the active user's `sys_modules` folder after confirmation. Unrecognized `.sprx` files are retained for possible future emulator support; invalid or encrypted files are skipped.
+
+Firmware must be dumped from a PlayStation 4 owned by the user. The installer does not download or provide Sony firmware. Use the [official shadPS4 dumping instructions](https://github.com/shadps4-emu/shadPS4/wiki/I.-Quick-start-%5BUsers%5D#4-dumping-firmware-modules).
+
 RB4DX uses `user\data\GoldHEN` in the LlysiX profile. Existing standard shadPS4 installations retain their detected title-specific layout.
 
 ## Game library

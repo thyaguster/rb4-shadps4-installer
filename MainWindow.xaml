@@ -304,6 +304,31 @@
                         </StackPanel>
                     </Border>
 
+                    <Border x:Name="FirmwareModulesPanel" Background="{StaticResource PanelBrush}"
+                            BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1"
+                            CornerRadius="10" Padding="18" Margin="0,14,0,0" Visibility="Collapsed">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="PS4 firmware modules" FontWeight="SemiBold" FontSize="15" />
+                                    <TextBlock x:Name="FirmwareModulesStatusText" Foreground="{StaticResource MutedTextBrush}"
+                                               FontSize="12" Margin="0,5,18,0" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button Grid.Column="1" Content="Import my dump" Style="{StaticResource PrimaryButton}"
+                                        VerticalAlignment="Center" Click="ImportFirmwareModules" />
+                            </Grid>
+                            <TextBlock Text="Select the folder you dumped from /system/common/lib on a PS4 you own. Valid ELF .sprx files are copied into this profile's sys_modules folder; existing same-named files are replaced only after confirmation."
+                                       Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,12,0,0" TextWrapping="Wrap" />
+                            <TextBlock Text="Firmware files are proprietary. This installer does not download or provide them."
+                                       Foreground="#E7B36C" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                <Button Content="Official dumping guide" Style="{StaticResource SecondaryButton}" Click="OpenFirmwareGuide" />
+                                <Button Content="Open sys_modules" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="OpenFirmwareModulesFolder" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
                     <Border x:Name="GameFilesPanel" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,14,0,0">
                         <StackPanel>
                             <Grid>
