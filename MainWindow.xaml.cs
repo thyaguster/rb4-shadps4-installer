@@ -589,8 +589,50 @@ public partial class MainWindow : Window
                 ? $"{customCount:N0} custom song{(customCount == 1 ? string.Empty : "s")}"
                 : $"{addonCount:N0} DLC/add-on item{(addonCount == 1 ? string.Empty : "s")}";
         InstalledContentSummaryText.Text = $"{breakdown} installed for {titleId}. Titles come from package metadata.";
+        ExportContentCatalogButton.IsEnabled = _installedContent.Count > 0;
         ApplyInstalledContentFilter();
         RefreshQueuedContentStatus();
+    }
+
+    private async void ExportInstalledContentCatalog(object sender, RoutedEventArgs e)
+    {
+        if (_installedContent.Count == 0) return;
+        var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
+        var dialog = new SaveFileDialog
+        {
+            Title = "Export installed RB4 content catalog",
+            Filter = "CSV spreadsheet (*.csv)|*.csv",
+            DefaultExt = ".csv",
+            AddExtension = true,
+            FileName = $"RB4-installed-content-{titleId}-{DateTime.Now:yyyyMMdd}.csv"
+        };
+        if (dialog.ShowDialog() != true) return;
+
+        ExportContentCatalogButton.IsEnabled = false;
+        InstallProgressBar.Visibility = Visibility.Visible;
+        InstallProgressBar.Value = 0;
+        var progress = new Progress<InstallProgress>(value =>
+        {
+            InstallProgressBar.Value = value.Percent;
+            ShowStatus(value.Message, false);
+        });
+        try
+        {
+            await InstalledContentCatalogService.ExportCsvAsync(
+                dialog.FileName, titleId, _installedContent, progress, CancellationToken.None);
+            InstallProgressBar.Value = 100;
+            ShowStatus($"Exported {_installedContent.Count:N0} installed content item(s) to {dialog.FileName}.", false, success: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or OperationCanceledException)
+        {
+            _lastErrorDetails = ex.ToString();
+            ShowStatus("Could not export the installed-content catalog: " + ex.Message, true);
+        }
+        finally
+        {
+            InstallProgressBar.Visibility = Visibility.Collapsed;
+            ExportContentCatalogButton.IsEnabled = _installedContent.Count > 0;
+        }
     }
 
     private void FilterInstalledContent(object sender, TextChangedEventArgs e)
