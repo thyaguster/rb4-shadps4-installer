@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Services\InstalledContentCatalogService.cs" Link="Services\InstalledContentCatalogService.cs" />
+    <Compile Include="..\..\Models\InstalledContentItem.cs" Link="Models\InstalledContentItem.cs" />
+    <Compile Include="..\..\Models\InstallRequest.cs" Link="Models\InstallRequest.cs" />
+  </ItemGroup>
+</Project>

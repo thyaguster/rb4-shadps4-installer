@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Services\BackupService.cs" Link="Services\BackupService.cs" />
+    <Compile Include="..\..\Services\FileTransaction.cs" Link="Services\FileTransaction.cs" />
+    <Compile Include="..\..\Services\PathUtility.cs" Link="Services\PathUtility.cs" />
+    <Compile Include="..\..\Models\InstallRequest.cs" Link="Models\InstallRequest.cs" />
+  </ItemGroup>
+</Project>

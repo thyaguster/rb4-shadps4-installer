@@ -20,11 +20,17 @@ tools/
 !tools/
 tools/*
 !tools/capture-screenshots.ps1
+!tools/test-duplicate-guard.ps1
 *.log
 *.tmp
 *.zip
 *.nupkg
 TestResults/
+!TestResults/
+TestResults/**
+!TestResults/*/
+!TestResults/*/*.cs
+!TestResults/*/*.csproj
 artifacts/
 
 # OS metadata

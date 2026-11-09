@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Services\ContentAuditService.cs" Link="Services\ContentAuditService.cs" />
+    <Compile Include="..\..\Services\ParamSfoReader.cs" Link="Services\ParamSfoReader.cs" />
+    <Compile Include="..\..\Models\ContentAuditResult.cs" Link="Models\ContentAuditResult.cs" />
+    <Compile Include="..\..\Models\InstallRequest.cs" Link="Models\InstallRequest.cs" />
+  </ItemGroup>
+</Project>
