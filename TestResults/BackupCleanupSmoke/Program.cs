@@ -9,8 +9,12 @@ try
     var euOnly = Backup(Path.Combine(temp, "eu-only"), "CUSA02901", now.AddDays(-1), 4096);
     var candidates = BackupService.FindCleanupCandidates([usaNew, euOnly, usaOld]);
     Assert(candidates.Count == 1 && ReferenceEquals(candidates[0], usaOld), "cleanup must retain newest backup per region");
-    Assert(usaOld.StoredBytes == 1024 && usaNew.DisplayDetails.Contains("2.0 KB"), "actual stored sizes should be reported");
-    Assert(BackupService.FormatBytes(0) == "0 B" && BackupService.FormatBytes(1024 * 1024) == "1.0 MB", "byte formatting should be stable");
+    Assert(usaOld.StoredBytes == 1024 && usaNew.StoredBytes == 2048 &&
+           usaNew.DisplayDetails.Contains(BackupService.FormatBytes(2048), StringComparison.Ordinal),
+        "actual stored sizes should be reported independently of the current number format");
+    Assert(BackupService.FormatBytes(0) == $"{0:N0} B" &&
+           BackupService.FormatBytes(1024 * 1024) == $"{1.0:N1} MB",
+        "byte formatting should be stable for the current number format");
     Console.WriteLine("Backup cleanup smoke tests passed.");
 }
 finally

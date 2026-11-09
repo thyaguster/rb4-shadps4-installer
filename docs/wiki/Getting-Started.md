@@ -18,6 +18,8 @@ Managed downloads are placed in the installer's Local AppData folders. An existi
 
 Managed emulator, RB4DX, PKG-extractor, and application-update downloads retry brief network failures automatically. When the server supports HTTP ranges, retries continue from retained partial bytes; progress text shows when a transfer is retrying or resuming.
 
+While a managed download is active, the footer shows **Cancel download**. Cancelling restores the installer controls without reporting an error. Temporary emulator, RB4DX, and PKG-extractor downloads are cleaned up; application-update partials are retained so a later attempt can resume.
+
 ## 3. Confirm the paths
 
 Review the shadPS4 application folder, user folder, and game library. See [Emulator and Paths](Emulator-and-Paths) for details.

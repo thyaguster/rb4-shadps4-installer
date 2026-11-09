@@ -24,6 +24,24 @@ try
     Assert(progress.Values.Any(value => value.Status.StartsWith("Download interrupted", StringComparison.Ordinal)),
         "retry progress should be reported");
     Assert(progress.Values.Any(value => value.Resumed), "resumed transfer progress should be reported");
+
+    var cancelledDestination = Path.Combine(root, "cancelled.zip");
+    using var cancellation = new CancellationTokenSource();
+    using var cancellationHandler = new InterruptingHandler(payload, interruptedAt);
+    using var cancellationClient = new HttpClient(cancellationHandler);
+    var cancellationProgress = new CancelOnFirstProgress(cancellation);
+    var cancellationObserved = false;
+    try
+    {
+        await ResumableDownloadService.DownloadAsync(
+            cancellationClient, "https://downloads.invalid/cancelled.zip", cancelledDestination,
+            cancellationProgress, cancellation.Token);
+    }
+    catch (OperationCanceledException) { cancellationObserved = true; }
+    Assert(cancellationObserved, "a user cancellation should propagate as cancellation");
+    Assert(cancellationHandler.RequestCount == 1, "a cancelled transfer must not retry");
+    Assert(File.Exists(cancelledDestination + ".part") && new FileInfo(cancelledDestination + ".part").Length > 0,
+        "a cancelled resumable transfer should retain its partial bytes");
     Console.WriteLine("Resumable-download smoke tests passed.");
 }
 finally
@@ -40,6 +58,14 @@ sealed class RecordingProgress : IProgress<DownloadTransferProgress>
 {
     public List<DownloadTransferProgress> Values { get; } = [];
     public void Report(DownloadTransferProgress value) => Values.Add(value);
+}
+
+sealed class CancelOnFirstProgress(CancellationTokenSource cancellation) : IProgress<DownloadTransferProgress>
+{
+    public void Report(DownloadTransferProgress value)
+    {
+        if (value.BytesReceived > 0) cancellation.Cancel();
+    }
 }
 
 sealed class InterruptingHandler(byte[] payload, int interruptedAt) : HttpMessageHandler

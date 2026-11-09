@@ -14,6 +14,7 @@ public partial class MainWindow : Window
 {
     private readonly InstallerService _installer = new();
     private CancellationTokenSource? _cancellation;
+    private CancellationTokenSource? _downloadCancellation;
     private string? _lastAutoAddonDirectory;
     private InstalledGame? _detectedGame;
     private bool _settingsVisible;
@@ -542,11 +543,9 @@ public partial class MainWindow : Window
     private async Task DownloadAndInstallAppUpdateAsync()
     {
         if (_latestAppRelease is null || _downloadingAppUpdate) return;
+        var cancellation = BeginDownloadOperation();
+        if (cancellation is null) return;
         _downloadingAppUpdate = true;
-        CheckForUpdatesButton.IsEnabled = false;
-        InstallAppUpdateButton.IsEnabled = false;
-        InstallProgressBar.Visibility = Visibility.Visible;
-        InstallProgressBar.Value = 0;
         var progress = new Progress<InstallProgress>(value =>
         {
             InstallProgressBar.Value = value.Percent;
@@ -555,7 +554,7 @@ public partial class MainWindow : Window
         try
         {
             var update = await AppUpdateService.DownloadAsync(
-                _latestAppRelease, AppUpdateService.CurrentEdition, progress, CancellationToken.None);
+                _latestAppRelease, AppUpdateService.CurrentEdition, progress, cancellation.Token);
             SavePreferences();
             ShowStatus(AppUpdateService.CurrentEdition == AppEdition.Portable
                 ? "Update verified. Restarting into the new portable version…"
@@ -563,13 +562,18 @@ public partial class MainWindow : Window
             AppUpdateService.Launch(update);
             Application.Current.Shutdown();
         }
+        catch (OperationCanceledException)
+        {
+            ShowStatus("Application update download cancelled. A later attempt can resume the retained partial download.", false);
+        }
         catch (Exception ex)
         {
             ShowStatus("Application update failed: " + ex.Message, true);
+        }
+        finally
+        {
             _downloadingAppUpdate = false;
-            CheckForUpdatesButton.IsEnabled = true;
-            InstallAppUpdateButton.IsEnabled = true;
-            InstallProgressBar.Visibility = Visibility.Collapsed;
+            EndDownloadOperation(cancellation);
         }
     }
 
@@ -1478,8 +1482,8 @@ public partial class MainWindow : Window
 
     private async void DownloadPackageExtractor(object sender, RoutedEventArgs e)
     {
-        DownloadExtractorButton.IsEnabled = false;
-        InstallProgressBar.Visibility = Visibility.Visible;
+        var cancellation = BeginDownloadOperation();
+        if (cancellation is null) return;
         var progress = new Progress<InstallProgress>(value =>
         {
             InstallProgressBar.Value = value.Percent;
@@ -1487,9 +1491,13 @@ public partial class MainWindow : Window
         });
         try
         {
-            PackageExtractorText.Text = await PackageExtractor.DownloadOfficialAsync(progress, CancellationToken.None);
+            PackageExtractorText.Text = await PackageExtractor.DownloadOfficialAsync(progress, cancellation.Token);
             InstallProgressBar.Value = 100;
             ShowStatus("Official pkg_extractor 1.1 downloaded and SHA-256 verified.", false);
+        }
+        catch (OperationCanceledException)
+        {
+            ShowStatus("Package-extractor download cancelled. Temporary files were cleaned up.", false);
         }
         catch (Exception ex)
         {
@@ -1497,8 +1505,7 @@ public partial class MainWindow : Window
         }
         finally
         {
-            DownloadExtractorButton.IsEnabled = true;
-            InstallProgressBar.Visibility = Visibility.Collapsed;
+            EndDownloadOperation(cancellation);
         }
     }
 
@@ -1515,6 +1522,8 @@ public partial class MainWindow : Window
     private async Task DownloadManagedShadPs4Async(bool rb4Compatible)
     {
         if (!EnsureShadPs4Closed("update the managed shadPS4 application")) return;
+        var cancellation = BeginDownloadOperation();
+        if (cancellation is null) return;
         var previousUserDirectory = PathUtility.Normalize(UserDirectoryText.Text);
         var destination = rb4Compatible
             ? OfficialDownloads.Rb4ShadPs4Directory
@@ -1523,11 +1532,6 @@ public partial class MainWindow : Window
         ShadPs4PathSourceText.Text = rb4Compatible
             ? "Using the separate managed folder for the tested RB4-compatible build."
             : "Using the managed folder for the latest official shadPS4 release.";
-        DownloadShadPs4Button.IsEnabled = false;
-        DownloadRb4ShadPs4Button.IsEnabled = false;
-        InstallButton.IsEnabled = false;
-        InstallProgressBar.Visibility = Visibility.Visible;
-        InstallProgressBar.Value = 0;
         var progress = new Progress<InstallProgress>(value =>
         {
             InstallProgressBar.Value = value.Percent;
@@ -1538,16 +1542,16 @@ public partial class MainWindow : Window
             Rb4ShadPs4DownloadResult? rb4Result = null;
             if (rb4Compatible)
             {
-                rb4Result = await OfficialDownloads.DownloadRb4ShadPs4Async(destination, progress, CancellationToken.None);
+                rb4Result = await OfficialDownloads.DownloadRb4ShadPs4Async(destination, progress, cancellation.Token);
                 ShadPs4InstallText.Text = rb4Result.Directory;
                 var profile = await ManagedEmulatorProfile.PreparePortableUserAsync(
-                    rb4Result.Directory, previousUserDirectory, progress, CancellationToken.None);
+                    rb4Result.Directory, previousUserDirectory, progress, cancellation.Token);
                 UserDirectoryText.Text = profile.UserDirectory;
                 SetAutoAddonDirectory();
             }
             else
             {
-                ShadPs4InstallText.Text = await OfficialDownloads.DownloadShadPs4Async(destination, progress, CancellationToken.None);
+                ShadPs4InstallText.Text = await OfficialDownloads.DownloadShadPs4Async(destination, progress, cancellation.Token);
                 if (_isFirstRun)
                 {
                     UserDirectoryText.Text = ShadPs4Locator.InferUserDirectory(ShadPs4InstallText.Text);
@@ -1567,25 +1571,24 @@ public partial class MainWindow : Window
                 message += " The pinned known-good release was used because the latest release could not be verified.";
             ShowStatus(message, false, success: true);
         }
+        catch (OperationCanceledException)
+        {
+            ShowStatus("shadPS4 download cancelled. Temporary files were cleaned up.", false);
+        }
         catch (Exception ex)
         {
             ShowStatus($"Could not download {(rb4Compatible ? "the RB4-compatible" : "official")} shadPS4 build: {ex.Message}", true);
         }
         finally
         {
-            DownloadShadPs4Button.IsEnabled = true;
-            DownloadRb4ShadPs4Button.IsEnabled = true;
-            InstallButton.IsEnabled = true;
-            InstallProgressBar.Visibility = Visibility.Collapsed;
+            EndDownloadOperation(cancellation);
         }
     }
 
     private async void DownloadDeluxe(object sender, RoutedEventArgs e)
     {
-        DownloadDeluxeButton.IsEnabled = false;
-        InstallButton.IsEnabled = false;
-        InstallProgressBar.Visibility = Visibility.Visible;
-        InstallProgressBar.Value = 0;
+        var cancellation = BeginDownloadOperation();
+        if (cancellation is null) return;
         var progress = new Progress<InstallProgress>(value =>
         {
             InstallProgressBar.Value = value.Percent;
@@ -1593,8 +1596,12 @@ public partial class MainWindow : Window
         });
         try
         {
-            DeluxeSourceText.Text = await OfficialDownloads.DownloadDeluxeAsync(progress, CancellationToken.None);
+            DeluxeSourceText.Text = await OfficialDownloads.DownloadDeluxeAsync(progress, cancellation.Token);
             ShowStatus("Official RB4 Deluxe downloaded, extracted, and selected.", false, success: true);
+        }
+        catch (OperationCanceledException)
+        {
+            ShowStatus("RB4 Deluxe download cancelled. Temporary files were cleaned up.", false);
         }
         catch (Exception ex)
         {
@@ -1602,9 +1609,7 @@ public partial class MainWindow : Window
         }
         finally
         {
-            DownloadDeluxeButton.IsEnabled = true;
-            InstallButton.IsEnabled = true;
-            InstallProgressBar.Visibility = Visibility.Collapsed;
+            EndDownloadOperation(cancellation);
         }
     }
 
@@ -1759,7 +1764,57 @@ public partial class MainWindow : Window
         }
     }
 
-    private void CancelInstall(object sender, RoutedEventArgs e) => _cancellation?.Cancel();
+    private CancellationTokenSource? BeginDownloadOperation()
+    {
+        if (_downloadCancellation is not null || _cancellation is not null)
+        {
+            ShowStatus("Another install or download operation is already active.", true);
+            return null;
+        }
+
+        _downloadCancellation = new CancellationTokenSource();
+        DownloadShadPs4Button.IsEnabled = false;
+        DownloadRb4ShadPs4Button.IsEnabled = false;
+        DownloadDeluxeButton.IsEnabled = false;
+        DownloadExtractorButton.IsEnabled = false;
+        CheckForUpdatesButton.IsEnabled = false;
+        InstallAppUpdateButton.IsEnabled = false;
+        InstallButton.IsEnabled = false;
+        InstallQueuedContentButton.IsEnabled = false;
+        CancelButton.Content = "Cancel download";
+        CancelButton.IsEnabled = true;
+        CancelButton.Visibility = Visibility.Visible;
+        InstallProgressBar.Value = 0;
+        InstallProgressBar.Visibility = Visibility.Visible;
+        return _downloadCancellation;
+    }
+
+    private void EndDownloadOperation(CancellationTokenSource cancellation)
+    {
+        if (!ReferenceEquals(_downloadCancellation, cancellation)) return;
+        cancellation.Dispose();
+        _downloadCancellation = null;
+        DownloadShadPs4Button.IsEnabled = true;
+        DownloadRb4ShadPs4Button.IsEnabled = true;
+        DownloadDeluxeButton.IsEnabled = true;
+        DownloadExtractorButton.IsEnabled = true;
+        CheckForUpdatesButton.IsEnabled = !_checkingForAppUpdates;
+        InstallAppUpdateButton.IsEnabled = _latestAppRelease is not null;
+        InstallButton.IsEnabled = true;
+        InstallQueuedContentButton.IsEnabled = true;
+        CancelButton.Content = "Cancel";
+        CancelButton.IsEnabled = true;
+        CancelButton.Visibility = Visibility.Collapsed;
+        InstallProgressBar.Visibility = Visibility.Collapsed;
+    }
+
+    private void CancelInstall(object sender, RoutedEventArgs e)
+    {
+        CancelButton.Content = "Cancelling…";
+        CancelButton.IsEnabled = false;
+        if (_downloadCancellation is not null) _downloadCancellation.Cancel();
+        else _cancellation?.Cancel();
+    }
 
     private void OpenInstallLog(object sender, RoutedEventArgs e)
     {
@@ -1780,6 +1835,8 @@ public partial class MainWindow : Window
         InstallButton.Visibility = installing || _installedContentVisible ? Visibility.Collapsed : Visibility.Visible;
         InstallQueuedContentButton.IsEnabled = !installing;
         CancelButton.Visibility = installing ? Visibility.Visible : Visibility.Collapsed;
+        CancelButton.Content = "Cancel";
+        CancelButton.IsEnabled = true;
         InstallProgressBar.Visibility = installing ? Visibility.Visible : Visibility.Collapsed;
         if (installing) InstallProgressBar.Value = 0;
         else UpdateSettingsVisibility();

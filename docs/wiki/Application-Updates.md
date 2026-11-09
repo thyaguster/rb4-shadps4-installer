@@ -30,3 +30,5 @@ No updater helper runs while the app is idle or when an update is declined.
 Every application update is SHA-256 verified before launch. Self-updating does not modify Rock Band 4, RB4 Deluxe, DLC, custom songs, shadPS4, or saved path choices.
 
 Interrupted update downloads retain a `.part` file and retry up to three times using an HTTP byte-range request. A later attempt for the same release can continue those retained bytes instead of restarting at zero. The completed asset is moved into place atomically before SHA-256 verification.
+
+Use **Cancel download** in the footer to stop an update transfer. The partial update remains in the managed update folder, and selecting the same update later resumes it when the server supports byte ranges.
