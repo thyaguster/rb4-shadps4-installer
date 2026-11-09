@@ -1,6 +1,6 @@
 #define MyAppName "RB4 shadPS4 Installer"
 #ifndef MyAppVersion
-  #define MyAppVersion "0.8.28"
+  #define MyAppVersion "0.8.29"
 #endif
 #define MyAppExeName "RB4ShadPS4Installer.exe"
 

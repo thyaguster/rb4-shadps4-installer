@@ -1,5 +1,15 @@
+param([string]$AssemblyPath)
+
 $ErrorActionPreference = "Stop"
-$assembly = [Reflection.Assembly]::LoadFrom((Resolve-Path "$PSScriptRoot\..\bin\Release\net8.0-windows\RB4ShadPS4Installer.dll"))
+if ([string]::IsNullOrWhiteSpace($AssemblyPath)) {
+    $assemblyPath = Get-ChildItem -LiteralPath "$PSScriptRoot\..\bin\Release" -Recurse -File -Filter "RB4ShadPS4Installer.dll" |
+        Sort-Object LastWriteTimeUtc -Descending |
+        Select-Object -First 1 -ExpandProperty FullName
+}
+if ([string]::IsNullOrWhiteSpace($AssemblyPath) -or -not (Test-Path -LiteralPath $AssemblyPath -PathType Leaf)) {
+    throw "A built RB4ShadPS4Installer.dll was not found. Build or package the installer before running this test."
+}
+$assembly = [Reflection.Assembly]::LoadFrom((Resolve-Path -LiteralPath $AssemblyPath))
 $root = Join-Path $env:TEMP ("rb4-duplicate-guard-" + [guid]::NewGuid().ToString("N"))
 $titleId = "CUSA02084"
 $contentId = "UP8802-CUSA02084_00-DUPLICATETEST001"
