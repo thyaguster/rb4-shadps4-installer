@@ -10,6 +10,10 @@ Warnings include a suggested next action. Use **Copy report** when asking for he
 
 **Export support ZIP** creates a small troubleshooting archive containing the health report—including its content-audit summary—the latest shadPS4 log, latest installer log, and basic runtime information. Configured paths, the Windows user name, email addresses, and IPv4 addresses are redacted. Keys, saves, firmware, configuration files, games, PKGs, add-ons, and backup contents are excluded. Always review the text files before sharing the ZIP.
 
+## The installer closed after an unexpected error
+
+The installer catches unexpected UI errors and shows a matching crash window instead of disappearing silently. It stores a local `crash-*.log` under `%LOCALAPPDATA%\RB4ShadPS4Installer\logs`, retains the newest ten reports, and provides buttons to open the report folder or copy the details. Reports can contain local paths, so review them before sharing. **Export support ZIP** includes the latest crash report when one exists and applies the normal path, user-name, email, and IP-address redaction.
+
 ## The portable app does not open
 
 Extract the entire ZIP before running it. Do not launch the executable from inside the archive. Windows may show a SmartScreen prompt because community builds are not code-signed; inspect the downloaded file and choose the appropriate option only if it came from this repository.

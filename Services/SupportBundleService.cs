@@ -32,6 +32,7 @@ internal static class SupportBundleService
             Configurations, account data, keys, saves, firmware modules, game files,
             PKGs, DLC/custom-song files, and backup contents are intentionally excluded.
             Configured local paths and the Windows user name are replaced with labels.
+            When available, the latest sanitized crash report is included for diagnosis.
             Review the text files before sharing the archive.
             """);
         AddText(archive, "health-report.txt", Sanitize(InstallationHealthService.Format(report), replacements));
@@ -48,6 +49,13 @@ internal static class SupportBundleService
             : null;
         if (installerLog is not null)
             AddSanitizedLog(archive, installerLog, "logs/latest-installer.log", replacements);
+        var crashLog = Directory.Exists(installerLogDirectory)
+            ? Directory.EnumerateFiles(installerLogDirectory, "crash-*.log")
+                .OrderByDescending(File.GetLastWriteTimeUtc)
+                .FirstOrDefault()
+            : null;
+        if (crashLog is not null)
+            AddSanitizedLog(archive, crashLog, "logs/latest-crash.log", replacements);
     }
 
     private static string BuildEnvironmentReport()

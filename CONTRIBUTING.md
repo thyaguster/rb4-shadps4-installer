@@ -11,6 +11,7 @@ Thanks for helping improve RB4 shadPS4 Installer.
    - `dotnet run --project TestResults/BackupCleanupSmoke/BackupCleanupSmoke.csproj -c Release`
    - `dotnet run --project TestResults/ContentCatalogSmoke/ContentCatalogSmoke.csproj -c Release`
    - `dotnet run --project TestResults/ContentAuditSmoke/ContentAuditSmoke.csproj -c Release`
+   - `dotnet run --project TestResults/CrashReportSmoke/CrashReportSmoke.csproj -c Release`
    - `./tools/test-duplicate-guard.ps1`
 5. For packaged releases, install Inno Setup 6 and run `./packaging/build-release.ps1`.
 
