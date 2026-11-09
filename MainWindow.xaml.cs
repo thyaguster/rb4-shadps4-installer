@@ -414,6 +414,7 @@ public partial class MainWindow : Window
         CreditsPanel.Visibility = creditsView ? Visibility.Visible : Visibility.Collapsed;
         InstalledContentPanel.Visibility = installedContentView ? Visibility.Visible : Visibility.Collapsed;
         HealthPanel.Visibility = healthView ? Visibility.Visible : Visibility.Collapsed;
+        RefreshEmulatorRollbackStatus();
         SettingsButton.Content = settingsView ? "←  Back to installer" : "⚙  Settings";
         SettingsButton.Style = (Style)FindResource(settingsView ? "PrimaryButton" : "SecondaryButton");
         CreditsButton.Content = creditsView ? "←  Back to installer" : "♥  Credits";
@@ -1070,6 +1071,7 @@ public partial class MainWindow : Window
         {
             ShadPs4InstallText.Text = value;
             ShadPs4PathSourceText.Text = "Custom application folder selected manually.";
+            RefreshEmulatorRollbackStatus();
         }
     }
 
@@ -1091,6 +1093,7 @@ public partial class MainWindow : Window
         AddonDirectoryText.Text = _lastAutoAddonDirectory;
         var libraries = ShadPs4Locator.FindGameLibraries(UserDirectoryText.Text.Trim());
         if (libraries.Count > 0) GameLibraryText.Text = libraries[0];
+        RefreshEmulatorRollbackStatus();
         ShowStatus("Existing shadPS4 installation detected. Its configured paths were filled in below.", false, success: true);
     }
 
@@ -1099,6 +1102,7 @@ public partial class MainWindow : Window
         ShadPs4InstallText.Text = OfficialDownloads.DefaultShadPs4Directory;
         ShadPs4PathSourceText.Text = "Using the installer-managed default folder.";
         SavePreferences();
+        RefreshEmulatorRollbackStatus();
         ShowStatus("The managed shadPS4 folder is now selected. Existing files were not changed.", false, success: true);
     }
 
@@ -1519,6 +1523,92 @@ public partial class MainWindow : Window
         await DownloadManagedShadPs4Async(rb4Compatible: true);
     }
 
+    private EmulatorRollbackStatus GetEmulatorRollbackStatus() => EmulatorRollbackService.Inspect(
+        PathUtility.Normalize(ShadPs4InstallText.Text),
+        OfficialDownloads.DefaultShadPs4Directory,
+        OfficialDownloads.Rb4ShadPs4Directory);
+
+    private void RefreshEmulatorRollbackStatus()
+    {
+        if (EmulatorRollbackPanel is null) return;
+        var status = GetEmulatorRollbackStatus();
+        EmulatorRollbackPanel.Visibility = status.IsManaged ? Visibility.Visible : Visibility.Collapsed;
+        if (!status.IsManaged) return;
+
+        var channel = status.Channel == ManagedEmulatorChannel.LlysixRb4 ? "LlysiX RB4" : "official shadPS4";
+        var safety = status.Channel == ManagedEmulatorChannel.LlysixRb4
+            ? "The newest RB4 portable profile stays active when builds are swapped."
+            : "The replaced build stays available so the restore can be undone.";
+        EmulatorRollbackStatusText.Text = status.Available
+            ? $"{channel}: current {status.CurrentVersion}; previous {status.PreviousVersion}. {safety}"
+            : $"No previous {channel} build is available yet. The next successful managed update will preserve one here.";
+        RestorePreviousEmulatorButton.IsEnabled = status.Available && _downloadCancellation is null && _cancellation is null;
+    }
+
+    private async void RestorePreviousEmulator(object sender, RoutedEventArgs e)
+    {
+        var status = GetEmulatorRollbackStatus();
+        if (!status.Available)
+        {
+            RefreshEmulatorRollbackStatus();
+            ShowStatus("No valid previous managed emulator build is available.", true);
+            return;
+        }
+
+        var channel = status.Channel == ManagedEmulatorChannel.LlysixRb4 ? "LlysiX RB4" : "official shadPS4";
+        var profileNote = status.Channel == ManagedEmulatorChannel.LlysixRb4
+            ? "\n\nYour newest portable user profile, settings, and saves will stay active."
+            : string.Empty;
+        var confirmation = new ConfirmationWindow(
+            "Restore previous emulator",
+            $"Restore the previous {channel} build?",
+            $"Current: {status.CurrentVersion}\nRestore: {status.PreviousVersion}{profileNote}\n\nThe current build will be retained, so this action can be undone by restoring again.",
+            "Restore previous build") { Owner = this };
+        if (confirmation.ShowDialog() != true) return;
+        if (!EnsureShadPs4Closed("restore the previous managed shadPS4 build")) return;
+
+        var cancellation = BeginDownloadOperation("Cancel rollback");
+        if (cancellation is null) return;
+        try
+        {
+            InstallProgressBar.Value = 20;
+            ShowStatus("Validating the current and previous emulator builds", false);
+            var result = await Task.Run(() => EmulatorRollbackService.Restore(
+                ShadPs4InstallText.Text,
+                OfficialDownloads.DefaultShadPs4Directory,
+                OfficialDownloads.Rb4ShadPs4Directory,
+                cancellation.Token), cancellation.Token);
+            ShadPs4InstallText.Text = result.ApplicationDirectory;
+            if (result.Channel == ManagedEmulatorChannel.LlysixRb4)
+            {
+                UserDirectoryText.Text = ManagedEmulatorProfile.GetPortableUserDirectory(result.ApplicationDirectory);
+                SetAutoAddonDirectory();
+            }
+            ShadPs4PathSourceText.Text = result.Channel == ManagedEmulatorChannel.LlysixRb4
+                ? "Restored installer-managed LlysiX RB4 build with its newest isolated portable profile."
+                : "Restored the previous installer-managed official shadPS4 build.";
+            InstallProgressBar.Value = 100;
+            SavePreferences();
+            RefreshDesktopShortcuts(showSuccess: false);
+            TryDetectInstalledGame(showNotFound: false);
+            ShowStatus($"Restored {channel} {result.RestoredVersion}. {result.RetainedVersion} remains available as the rollback build.", false, success: true);
+        }
+        catch (OperationCanceledException)
+        {
+            ShowStatus("Emulator rollback cancelled before any folders were changed.", false);
+        }
+        catch (Exception ex)
+        {
+            _lastErrorDetails = ex.ToString();
+            ShowStatus("Could not restore the previous emulator build: " + ex.Message, true);
+        }
+        finally
+        {
+            EndDownloadOperation(cancellation);
+            RefreshEmulatorRollbackStatus();
+        }
+    }
+
     private async Task DownloadManagedShadPs4Async(bool rb4Compatible)
     {
         if (!EnsureShadPs4Closed("update the managed shadPS4 application")) return;
@@ -1569,6 +1659,7 @@ public partial class MainWindow : Window
                 message += " It uses an isolated portable user profile beside the LlysiX launcher.";
             if (rb4Result?.UsedPinnedFallback == true)
                 message += " The pinned known-good release was used because the latest release could not be verified.";
+            RefreshEmulatorRollbackStatus();
             ShowStatus(message, false, success: true);
         }
         catch (OperationCanceledException)
@@ -1764,7 +1855,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private CancellationTokenSource? BeginDownloadOperation()
+    private CancellationTokenSource? BeginDownloadOperation(string cancelLabel = "Cancel download")
     {
         if (_downloadCancellation is not null || _cancellation is not null)
         {
@@ -1781,7 +1872,8 @@ public partial class MainWindow : Window
         InstallAppUpdateButton.IsEnabled = false;
         InstallButton.IsEnabled = false;
         InstallQueuedContentButton.IsEnabled = false;
-        CancelButton.Content = "Cancel download";
+        RestorePreviousEmulatorButton.IsEnabled = false;
+        CancelButton.Content = cancelLabel;
         CancelButton.IsEnabled = true;
         CancelButton.Visibility = Visibility.Visible;
         InstallProgressBar.Value = 0;
@@ -1806,6 +1898,7 @@ public partial class MainWindow : Window
         CancelButton.IsEnabled = true;
         CancelButton.Visibility = Visibility.Collapsed;
         InstallProgressBar.Visibility = Visibility.Collapsed;
+        RefreshEmulatorRollbackStatus();
     }
 
     private void CancelInstall(object sender, RoutedEventArgs e)

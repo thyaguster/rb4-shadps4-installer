@@ -15,6 +15,7 @@ internal static class OfficialDownloads
     private const string Rb4ShadPs4Tag = "rb4-2026-11-01";
     private const string Rb4ShadPs4Asset = "shadPS4-RB4-win64-2026-11-01-cc7f732.zip";
     private const string Rb4BuildMarker = ".rb4-shadps4-build.json";
+    private const string OfficialBuildMarker = ".rb4-shadps4-official-build.json";
     private const string DeluxeUrl = "https://nightly.link/hmxmilohax/rock-band-4-deluxe/workflows/build/main/RB4DX-PS4.zip";
 
     public static string DefaultShadPs4Directory => Path.Combine(
@@ -53,13 +54,31 @@ internal static class OfficialDownloads
         var selected = candidates.FirstOrDefault()
             ?? throw new InvalidOperationException("The official release does not currently contain a Windows x64 ZIP.");
 
-        await DownloadAndExtractAsync(client, selected.Url, selected.Digest, destination,
-            $"Downloading official shadPS4: {selected.Name}", progress, token);
-        var launcher = Directory.EnumerateFiles(destination, "shadPS4QtLauncher.exe", SearchOption.AllDirectories).FirstOrDefault()
-            ?? Directory.EnumerateFiles(destination, "shadPS4.exe", SearchOption.AllDirectories).FirstOrDefault();
-        if (launcher is null) throw new InvalidDataException("The downloaded shadPS4 archive did not contain its Windows launcher.");
-        progress.Report(new InstallProgress(100, "Official shadPS4 downloaded and extracted"));
-        return Path.GetDirectoryName(launcher)!;
+        var parent = Directory.GetParent(destination)?.FullName
+            ?? throw new InvalidOperationException("The managed official emulator folder has no parent directory.");
+        Directory.CreateDirectory(parent);
+        var staging = Path.Combine(parent, $"shadPS4-staging-{Guid.NewGuid():N}");
+        try
+        {
+            await DownloadAndExtractAsync(client, selected.Url, selected.Digest, staging,
+                $"Downloading official shadPS4: {selected.Name}", progress, token);
+            var stagedLauncher = FindLauncher(staging)
+                ?? throw new InvalidDataException("The downloaded shadPS4 archive did not contain its Windows launcher.");
+            var launcherRelativePath = Path.GetRelativePath(staging, stagedLauncher);
+            await File.WriteAllTextAsync(Path.Combine(staging, OfficialBuildMarker), JsonSerializer.Serialize(new
+            {
+                asset = selected.Name,
+                digest = selected.Digest,
+                installedAtUtc = DateTimeOffset.UtcNow
+            }, new JsonSerializerOptions { WriteIndented = true }), token);
+            EmulatorRollbackService.ReplaceWithStaging(destination, staging);
+            progress.Report(new InstallProgress(100, "Official shadPS4 downloaded, verified, and installed"));
+            return Path.GetDirectoryName(Path.Combine(destination, launcherRelativePath))!;
+        }
+        finally
+        {
+            if (Directory.Exists(staging)) Directory.Delete(staging, recursive: true);
+        }
     }
 
     public static async Task<Rb4ShadPs4DownloadResult> DownloadRb4ShadPs4Async(
@@ -85,7 +104,6 @@ internal static class OfficialDownloads
             ?? throw new InvalidOperationException("The managed RB4 emulator folder has no parent directory.");
         Directory.CreateDirectory(parent);
         var staging = Path.Combine(parent, $"shadPS4-RB4-staging-{Guid.NewGuid():N}");
-        var previous = destination + "-previous";
         try
         {
             await DownloadAndExtractAsync(client, release.Url, release.Digest, staging,
@@ -113,17 +131,7 @@ internal static class OfficialDownloads
                 installedAtUtc = DateTimeOffset.UtcNow
             }, new JsonSerializerOptions { WriteIndented = true }), token);
 
-            if (Directory.Exists(previous)) Directory.Delete(previous, recursive: true);
-            if (Directory.Exists(destination)) Directory.Move(destination, previous);
-            try
-            {
-                Directory.Move(staging, destination);
-            }
-            catch
-            {
-                if (!Directory.Exists(destination) && Directory.Exists(previous)) Directory.Move(previous, destination);
-                throw;
-            }
+            EmulatorRollbackService.ReplaceWithStaging(destination, staging);
 
             progress.Report(new InstallProgress(100, $"RB4-compatible shadPS4 {release.Tag} installed and verified"));
             return new Rb4ShadPs4DownloadResult(

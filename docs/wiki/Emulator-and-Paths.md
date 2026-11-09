@@ -19,6 +19,12 @@ The installer-managed LlysiX build instead uses a portable `user` folder beside 
 
 When the managed LlysiX build is updated, this portable profile is copied into the staged new build before the emulator folders are swapped. The preceding build and its original profile remain in the managed `-previous` recovery folder.
 
+## Emulator rollback
+
+Successful managed updates retain one previous emulator build for both the LlysiX RB4 and official channels. When one is available, Settings shows its version and enables **Restore previous build**.
+
+Restoring swaps the current and previous folders, so the replaced build remains available and the action can be undone by restoring again. For the LlysiX channel, only the emulator build is rolled back: the newest portable `user` profile remains active so settings, saves, firmware modules, and RB4DX data are not reverted. Custom emulator folders are never modified by this feature.
+
 ## Firmware modules
 
 Open **Settings → PS4 firmware modules** to see how many currently recognized modules are installed. **Import my dump** recursively scans a user-selected folder, accepts decrypted ELF `.sprx` files, and copies them into the active user's `sys_modules` folder after confirmation. Unrecognized `.sprx` files are retained for possible future emulator support; invalid or encrypted files are skipped.

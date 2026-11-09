@@ -41,7 +41,7 @@
 | **Firmware setup** | Validates and imports decrypted `.sprx` modules plus dumped `font` and `font2` folders from the user's own PS4 |
 | **Existing installs** | Detects region, game version, Deluxe, and installed add-ons |
 | **Setup health** | Runs a cancellable background check with live stage/content-scan progress for emulator/profile alignment, RB4 2.21, RB4DX, installed-content integrity, modules, fonts, disk space, and the latest launch log; exports redacted support bundles |
-| **Safety** | SHA-256 checks, integrity-protected backups, conservative storage cleanup, rollback, install logs, and retained crash diagnostics |
+| **Safety** | SHA-256 checks, integrity-protected backups, emulator rollback, conservative storage cleanup, install logs, and retained crash diagnostics |
 | **Convenience** | Drag-and-drop, remembered paths, desktop shortcuts, resumable and cancellable managed downloads, and verified self-updates |
 
 Supported game regions:
@@ -93,7 +93,7 @@ For detailed instructions, path explanations, maintenance workflows, and trouble
 
 When upgrading an older installer-managed LlysiX setup, configuration, saves, keys, input profiles, sysmodules, and RB4DX data are copied into the isolated profile. Existing files under `%APPDATA%\shadPS4` are not deleted. The game library remains in its original location and is not duplicated.
 
-The previous managed RB4 build is retained during updates so it can be recovered if necessary.
+Managed updates retain the previous LlysiX or official emulator build. Settings shows both versions and provides **Restore previous build**; restoring swaps them so the action can be undone. LlysiX rollbacks preserve the newest portable user profile, including settings and saves.
 
 ## Firmware modules
 

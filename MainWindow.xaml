@@ -408,6 +408,20 @@
                             <TextBlock Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
                                 LlysiX's custom build is the recommended RB4-focused option. The official channel provides the standard latest shadPS4 release. Both check GitHub for updates, verify available SHA-256 digests, and use separate managed folders.
                             </TextBlock>
+                            <Border x:Name="EmulatorRollbackPanel" Background="#111821" BorderBrush="{StaticResource PanelBorderBrush}"
+                                    BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,12,0,0" Visibility="Collapsed">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                    <StackPanel Margin="0,0,16,0">
+                                        <TextBlock Text="Emulator rollback" FontWeight="SemiBold" />
+                                        <TextBlock x:Name="EmulatorRollbackStatusText" Foreground="{StaticResource MutedTextBrush}"
+                                                   FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Button x:Name="RestorePreviousEmulatorButton" Grid.Column="1" Content="Restore previous build"
+                                            Style="{StaticResource SecondaryButton}" VerticalAlignment="Center"
+                                            Click="RestorePreviousEmulator" />
+                                </Grid>
+                            </Border>
                             <TextBlock Text="User folder" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,12,0,5" />
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
