@@ -16,6 +16,8 @@ On first launch, either select an existing shadPS4 folder or download an emulato
 
 Managed downloads are placed in the installer's Local AppData folders. An existing emulator can remain wherever it is already installed.
 
+Managed emulator, RB4DX, PKG-extractor, and application-update downloads retry brief network failures automatically. When the server supports HTTP ranges, retries continue from retained partial bytes; progress text shows when a transfer is retrying or resuming.
+
 ## 3. Confirm the paths
 
 Review the shadPS4 application folder, user folder, and game library. See [Emulator and Paths](Emulator-and-Paths) for details.

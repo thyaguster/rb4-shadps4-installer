@@ -42,23 +42,15 @@ internal static class PackageExtractor
         {
             using var client = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
             client.DefaultRequestHeaders.UserAgent.ParseAdd("RB4ShadPS4Installer/0.2");
-            using var response = await client.GetAsync(DownloadUrl, HttpCompletionOption.ResponseHeadersRead, token);
-            response.EnsureSuccessStatusCode();
-            var total = response.Content.Headers.ContentLength;
-            await using (var input = await response.Content.ReadAsStreamAsync(token))
-            await using (var output = File.Create(archive))
+            var transferProgress = new InlineDownloadProgress(value =>
             {
-                var buffer = new byte[81920];
-                long received = 0;
-                int read;
-                while ((read = await input.ReadAsync(buffer, token)) > 0)
-                {
-                    await output.WriteAsync(buffer.AsMemory(0, read), token);
-                    received += read;
-                    var percent = total > 0 ? 100.0 * received / total.Value : 0;
-                    progress.Report(new InstallProgress(percent, "Downloading official PKG extractor"));
-                }
-            }
+                var percent = value.TotalBytes > 0 ? 100.0 * value.BytesReceived / value.TotalBytes.Value : 0;
+                var status = value.Status.StartsWith("Download interrupted", StringComparison.Ordinal)
+                    ? value.Status
+                    : value.Resumed ? "Resuming official PKG extractor" : "Downloading official PKG extractor";
+                progress.Report(new InstallProgress(percent, status));
+            });
+            await ResumableDownloadService.DownloadAsync(client, DownloadUrl, archive, transferProgress, token);
 
             await using (var stream = File.OpenRead(archive))
             {
@@ -75,7 +67,13 @@ internal static class PackageExtractor
         finally
         {
             if (File.Exists(archive)) File.Delete(archive);
+            if (File.Exists(archive + ".part")) File.Delete(archive + ".part");
         }
+    }
+
+    private sealed class InlineDownloadProgress(Action<DownloadTransferProgress> report) : IProgress<DownloadTransferProgress>
+    {
+        public void Report(DownloadTransferProgress value) => report(value);
     }
 
     public static async Task ExtractAsync(

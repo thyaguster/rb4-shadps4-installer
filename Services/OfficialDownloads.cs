@@ -234,23 +234,15 @@ internal static class OfficialDownloads
         var archive = Path.Combine(Path.GetTempPath(), $"rb4-official-{Guid.NewGuid():N}.zip");
         try
         {
-            using var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token);
-            response.EnsureSuccessStatusCode();
-            var total = response.Content.Headers.ContentLength;
-            await using (var input = await response.Content.ReadAsStreamAsync(token))
-            await using (var output = File.Create(archive))
+            var downloadProgress = new InlineDownloadProgress(value =>
             {
-                var buffer = new byte[131072];
-                long received = 0;
-                int read;
-                while ((read = await input.ReadAsync(buffer, token)) > 0)
-                {
-                    await output.WriteAsync(buffer.AsMemory(0, read), token);
-                    received += read;
-                    var percent = total > 0 ? 85.0 * received / total.Value : 5;
-                    progress.Report(new InstallProgress(percent, label));
-                }
-            }
+                var percent = value.TotalBytes > 0 ? 85.0 * value.BytesReceived / value.TotalBytes.Value : 5;
+                var status = value.Status.StartsWith("Download interrupted", StringComparison.Ordinal)
+                    ? value.Status
+                    : value.Resumed ? label + " (resuming)" : label;
+                progress.Report(new InstallProgress(percent, status));
+            });
+            await ResumableDownloadService.DownloadAsync(client, url, archive, downloadProgress, token);
 
             if (!string.IsNullOrWhiteSpace(expectedDigest) && expectedDigest.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase))
             {
@@ -269,7 +261,13 @@ internal static class OfficialDownloads
         finally
         {
             if (File.Exists(archive)) File.Delete(archive);
+            if (File.Exists(archive + ".part")) File.Delete(archive + ".part");
         }
+    }
+
+    private sealed class InlineDownloadProgress(Action<DownloadTransferProgress> report) : IProgress<DownloadTransferProgress>
+    {
+        public void Report(DownloadTransferProgress value) => report(value);
     }
 
     private sealed record Rb4Release(string Tag, string Asset, string Url, string Digest, bool IsPinnedFallback);

@@ -193,21 +193,20 @@ internal static class AppUpdateService
         IProgress<InstallProgress> progress,
         CancellationToken token)
     {
-        using var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, token);
-        response.EnsureSuccessStatusCode();
-        var total = response.Content.Headers.ContentLength;
-        await using var input = await response.Content.ReadAsStreamAsync(token);
-        await using var output = File.Create(destination);
-        var buffer = new byte[131072];
-        long received = 0;
-        int read;
-        while ((read = await input.ReadAsync(buffer, token)) > 0)
+        var transferProgress = new InlineDownloadProgress(value =>
         {
-            await output.WriteAsync(buffer.AsMemory(0, read), token);
-            received += read;
-            var percent = total > 0 ? 5 + 85.0 * received / total.Value : 10;
-            progress.Report(new InstallProgress(percent, $"Downloading {name}"));
-        }
+            var percent = value.TotalBytes > 0 ? 5 + 85.0 * value.BytesReceived / value.TotalBytes.Value : 10;
+            var status = value.Status.StartsWith("Download interrupted", StringComparison.Ordinal)
+                ? value.Status
+                : value.Resumed ? $"Resuming {name}" : $"Downloading {name}";
+            progress.Report(new InstallProgress(percent, status));
+        });
+        await ResumableDownloadService.DownloadAsync(client, url, destination, transferProgress, token);
+    }
+
+    private sealed class InlineDownloadProgress(Action<DownloadTransferProgress> report) : IProgress<DownloadTransferProgress>
+    {
+        public void Report(DownloadTransferProgress value) => report(value);
     }
 
     private static HttpClient CreateClient()

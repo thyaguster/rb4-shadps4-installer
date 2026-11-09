@@ -42,7 +42,7 @@
 | **Existing installs** | Detects region, game version, Deluxe, and installed add-ons |
 | **Setup health** | Runs a cancellable background check with live stage/content-scan progress for emulator/profile alignment, RB4 2.21, RB4DX, installed-content integrity, modules, fonts, disk space, and the latest launch log; exports redacted support bundles |
 | **Safety** | SHA-256 checks, integrity-protected backups, conservative storage cleanup, rollback, install logs, and retained crash diagnostics |
-| **Convenience** | Drag-and-drop, remembered paths, desktop shortcuts, and verified self-updates |
+| **Convenience** | Drag-and-drop, remembered paths, desktop shortcuts, resumable managed downloads, and verified self-updates |
 
 Supported game regions:
 
