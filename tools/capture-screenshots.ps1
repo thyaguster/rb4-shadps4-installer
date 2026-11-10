@@ -1,5 +1,5 @@
 param(
-    [string]$Executable = (Join-Path $PSScriptRoot "..\publish-v0.8.32\RB4ShadPS4Installer.exe"),
+    [string]$Executable = (Join-Path $PSScriptRoot "..\publish-v0.8.33\RB4ShadPS4Installer.exe"),
     [string]$OutputDirectory = (Join-Path $PSScriptRoot "..\docs\screenshots"),
     [switch]$FirstRunOnly
 )

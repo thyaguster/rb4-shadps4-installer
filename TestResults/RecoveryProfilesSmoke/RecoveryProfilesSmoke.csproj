@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Services\FileTransaction.cs" Link="Services\FileTransaction.cs" />
+    <Compile Include="..\..\Services\InstallationRecoveryService.cs" Link="Services\InstallationRecoveryService.cs" />
+    <Compile Include="..\..\Services\ContentProfileService.cs" Link="Services\ContentProfileService.cs" />
+    <Compile Include="..\..\Services\InstalledContentScanner.cs" Link="Services\InstalledContentScanner.cs" />
+    <Compile Include="..\..\Services\ParamSfoReader.cs" Link="Services\ParamSfoReader.cs" />
+    <Compile Include="..\..\Services\PathUtility.cs" Link="Services\PathUtility.cs" />
+    <Compile Include="..\..\Models\InstallRequest.cs" Link="Models\InstallRequest.cs" />
+    <Compile Include="..\..\Models\InstalledContentItem.cs" Link="Models\InstalledContentItem.cs" />
+  </ItemGroup>
+</Project>

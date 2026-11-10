@@ -36,6 +36,7 @@ public partial class MainWindow : Window
     private Task<InstallationHealthReport?>? _healthCheckTask;
     private CancellationTokenSource? _healthCheckCancellation;
     private int _lastSkippedContentCount;
+    private PendingInstallationRecovery? _pendingRecovery;
 
     public MainWindow()
     {
@@ -84,6 +85,7 @@ public partial class MainWindow : Window
             TryDetectInstalledGame(showNotFound: false);
             UpdateSettingsVisibility();
         }
+        RefreshInstallationRecovery();
     }
 
     private async void WindowLoaded(object sender, RoutedEventArgs e)
@@ -91,6 +93,90 @@ public partial class MainWindow : Window
         await EnsureManagedRb4ProfileAsync();
         if (!_isFirstRun && AutoCheckForUpdatesCheck.IsChecked == true)
             await CheckForAppUpdatesAsync(showCurrentStatus: false, promptForUpdate: true);
+    }
+
+    private void RefreshInstallationRecovery()
+    {
+        if (InstallationRecoveryPanel is null) return;
+        _pendingRecovery = InstallationRecoveryService.FindPending(PathUtility.Normalize(UserDirectoryText.Text));
+        InstallationRecoveryPanel.Visibility = _pendingRecovery is null ? Visibility.Collapsed : Visibility.Visible;
+        if (_pendingRecovery is null) return;
+        var request = _pendingRecovery.Journal.Request;
+        InstallationRecoveryStatusText.Text =
+            $"{request.TitleId} • {_pendingRecovery.Journal.Stage} • {_pendingRecovery.ChangedFileCount:N0} tracked file change(s). " +
+            "Resume first restores the known pre-install state, then reruns the saved request.";
+    }
+
+    private async void ResumeInterruptedInstall(object sender, RoutedEventArgs e)
+    {
+        var recovery = _pendingRecovery;
+        if (recovery is null) return;
+        var confirmation = new ConfirmationWindow(
+            "Resume interrupted installation",
+            "Restore the safe checkpoint and retry the saved installation?",
+            "The installer will first roll back every tracked file change, clean abandoned staging files, and then rerun the original request from its source files.",
+            "Resume safely") { Owner = this };
+        if (confirmation.ShowDialog() != true) return;
+        if (!EnsureShadPs4Closed("resume an interrupted installation")) return;
+        try
+        {
+            ShowStatus("Restoring the pre-install checkpoint before resuming", false);
+            await Task.Run(() => InstallationRecoveryService.Rollback(recovery));
+            _pendingRecovery = null;
+            RefreshInstallationRecovery();
+            var validation = _installer.Validate(recovery.Journal.Request);
+            if (!validation.IsValid)
+                throw new InvalidOperationException("The saved sources are no longer ready:\n• " + string.Join("\n• ", validation.Errors));
+            await ExecuteInstallAsync(recovery.Journal.Request,
+                Path.Combine(recovery.Journal.Request.GameLibrary, recovery.Journal.Request.TitleId));
+        }
+        catch (Exception ex)
+        {
+            _lastErrorDetails = ex.ToString();
+            ShowStatus("Could not resume the interrupted installation: " + ex.Message, true);
+        }
+        finally { RefreshInstallationRecovery(); }
+    }
+
+    private async void RollbackInterruptedInstall(object sender, RoutedEventArgs e)
+    {
+        var recovery = _pendingRecovery;
+        if (recovery is null) return;
+        var confirmation = new ConfirmationWindow(
+            "Roll back interrupted installation",
+            "Restore the files from before the interrupted installation?",
+            $"{recovery.ChangedFileCount:N0} tracked file change(s) will be reversed. Abandoned staging and recovery data will then be removed.",
+            "Roll back") { Owner = this };
+        if (confirmation.ShowDialog() != true) return;
+        if (!EnsureShadPs4Closed("roll back an interrupted installation")) return;
+        try
+        {
+            await Task.Run(() => InstallationRecoveryService.Rollback(recovery));
+            ShowStatus("Interrupted installation rolled back successfully.", false, success: true);
+            TryDetectInstalledGame(showNotFound: false);
+        }
+        catch (Exception ex)
+        {
+            _lastErrorDetails = ex.ToString();
+            ShowStatus("Could not roll back the interrupted installation: " + ex.Message, true);
+        }
+        finally { RefreshInstallationRecovery(); }
+    }
+
+    private async void CleanRecoveryStaging(object sender, RoutedEventArgs e)
+    {
+        var recovery = _pendingRecovery;
+        if (recovery is null) return;
+        try
+        {
+            await Task.Run(() => InstallationRecoveryService.CleanStaging(recovery));
+            ShowStatus("Abandoned extraction staging was cleaned. Resume and rollback remain available.", false, success: true);
+        }
+        catch (Exception ex)
+        {
+            ShowStatus("Could not clean the interrupted installation staging folder: " + ex.Message, true);
+        }
+        finally { RefreshInstallationRecovery(); }
     }
 
     private async Task EnsureManagedRb4ProfileAsync()
@@ -679,18 +765,94 @@ public partial class MainWindow : Window
     {
         var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
         var addonDirectory = PathUtility.Normalize(AddonDirectoryText.Text);
-        _installedContent = InstalledContentScanner.Find(addonDirectory, titleId);
-        var customCount = _installedContent.Count(item => item.IsCustomSong);
-        var unclassifiedCount = _installedContent.Count - customCount;
+        _installedContent = ContentProfileService.FindAll(addonDirectory, titleId);
+        var active = _installedContent.Where(item => item.IsEnabled).ToArray();
+        var customCount = active.Count(item => item.IsCustomSong);
+        var unclassifiedCount = active.Length - customCount;
+        var disabledCount = _installedContent.Count - active.Length;
         var breakdown = customCount > 0 && unclassifiedCount > 0
             ? $"{customCount:N0} recognized custom item{(customCount == 1 ? string.Empty : "s")} and {unclassifiedCount:N0} DLC/unclassified item{(unclassifiedCount == 1 ? string.Empty : "s")}"
             : customCount > 0
                 ? $"{customCount:N0} recognized custom item{(customCount == 1 ? string.Empty : "s")}"
                 : $"{unclassifiedCount:N0} DLC/unclassified item{(unclassifiedCount == 1 ? string.Empty : "s")}";
-        InstalledContentSummaryText.Text = $"{breakdown} installed for {titleId}. Classification uses package titles; ambiguous items stay unclassified.";
+        InstalledContentSummaryText.Text = $"{breakdown} enabled for {titleId}; {disabledCount:N0} disabled. Classification uses package titles; ambiguous items stay unclassified.";
         ExportContentCatalogButton.IsEnabled = _installedContent.Count > 0;
+        RefreshContentProfiles();
         ApplyInstalledContentFilter();
         RefreshQueuedContentStatus();
+    }
+
+    private void RefreshContentProfiles()
+    {
+        if (ContentProfileCombo is null) return;
+        var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
+        var selectedName = (ContentProfileCombo.SelectedItem as ContentProfileSummary)?.Name;
+        var profiles = ContentProfileService.List(PathUtility.Normalize(AddonDirectoryText.Text), titleId);
+        ContentProfileCombo.ItemsSource = profiles;
+        ContentProfileCombo.SelectedItem = profiles.FirstOrDefault(profile => profile.Name.Equals(selectedName, StringComparison.CurrentCultureIgnoreCase));
+        if (ContentProfileCombo.SelectedItem is null && profiles.Count > 0) ContentProfileCombo.SelectedIndex = 0;
+        ContentProfileSelectionChanged(ContentProfileCombo, null!);
+    }
+
+    private void ContentProfileSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var selected = ContentProfileCombo?.SelectedItem as ContentProfileSummary;
+        if (ApplyContentProfileButton is not null) ApplyContentProfileButton.IsEnabled = selected is not null;
+        if (DeleteContentProfileButton is not null) DeleteContentProfileButton.IsEnabled = selected is not null;
+        if (selected is not null && ContentProfileNameText is not null) ContentProfileNameText.Text = selected.Name;
+    }
+
+    private void SaveContentProfile(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
+            var name = ContentProfileNameText.Text;
+            ContentProfileService.Save(PathUtility.Normalize(AddonDirectoryText.Text), titleId, name, _installedContent);
+            RefreshContentProfiles();
+            ShowStatus($"Saved content profile “{name.Trim()}” with {_installedContent.Count(item => item.IsEnabled):N0} enabled item(s).", false, success: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            ShowStatus("Could not save the content profile: " + ex.Message, true);
+        }
+    }
+
+    private void ApplyContentProfile(object sender, RoutedEventArgs e)
+    {
+        if (ContentProfileCombo.SelectedItem is not ContentProfileSummary profile) return;
+        var confirmation = new ConfirmationWindow(
+            "Apply content profile",
+            $"Switch to “{profile.Name}”?",
+            $"The active set will be changed to the {profile.EnabledCount:N0} item(s) saved in this profile. Files are moved, not deleted.",
+            "Apply profile") { Owner = this };
+        if (confirmation.ShowDialog() != true || !EnsureShadPs4Closed("switch content profiles")) return;
+        try
+        {
+            var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
+            var moved = ContentProfileService.Apply(PathUtility.Normalize(AddonDirectoryText.Text), titleId, profile.Name);
+            TryDetectInstalledGame(showNotFound: false);
+            RefreshInstalledContent();
+            ShowStatus($"Applied “{profile.Name}”; moved {moved:N0} content folder(s). Restart shadPS4 before playing.", false, success: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            ShowStatus("Could not apply the content profile: " + ex.Message, true);
+        }
+    }
+
+    private void DeleteContentProfile(object sender, RoutedEventArgs e)
+    {
+        if (ContentProfileCombo.SelectedItem is not ContentProfileSummary profile) return;
+        var confirmation = new ConfirmationWindow(
+            "Delete content profile", $"Delete “{profile.Name}”?",
+            "Only the saved profile definition is deleted. Installed content is not changed.", "Delete profile") { Owner = this };
+        if (confirmation.ShowDialog() != true) return;
+        var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
+        ContentProfileService.Delete(PathUtility.Normalize(AddonDirectoryText.Text), titleId, profile.Name);
+        ContentProfileNameText.Clear();
+        RefreshContentProfiles();
+        ShowStatus($"Deleted content profile “{profile.Name}”.", false, success: true);
     }
 
     private async void ExportInstalledContentCatalog(object sender, RoutedEventArgs e)
@@ -790,6 +952,8 @@ public partial class MainWindow : Window
         NoInstalledContentText.Visibility = filtered.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         OpenInstalledContentFolderButton.IsEnabled = false;
         DeleteInstalledContentButton.IsEnabled = false;
+        DisableInstalledContentButton.IsEnabled = false;
+        EnableInstalledContentButton.IsEnabled = false;
         DeleteInstalledContentButton.Content = "Move selected to Recycle Bin";
     }
 
@@ -801,9 +965,34 @@ public partial class MainWindow : Window
         var selected = InstalledContentList.SelectedItems.Cast<InstalledContentItem>().ToArray();
         OpenInstalledContentFolderButton.IsEnabled = selected.Length == 1;
         DeleteInstalledContentButton.IsEnabled = selected.Length > 0;
+        DisableInstalledContentButton.IsEnabled = selected.Any(item => item.IsEnabled);
+        EnableInstalledContentButton.IsEnabled = selected.Any(item => !item.IsEnabled);
         DeleteInstalledContentButton.Content = selected.Length > 1
             ? $"Move {selected.Length:N0} selected to Recycle Bin"
             : "Move selected to Recycle Bin";
+    }
+
+    private void DisableInstalledContent(object sender, RoutedEventArgs e) => SetSelectedContentEnabled(false);
+
+    private void EnableInstalledContent(object sender, RoutedEventArgs e) => SetSelectedContentEnabled(true);
+
+    private void SetSelectedContentEnabled(bool enabled)
+    {
+        var selected = InstalledContentList.SelectedItems.Cast<InstalledContentItem>()
+            .Where(item => item.IsEnabled != enabled).ToArray();
+        if (selected.Length == 0 || !EnsureShadPs4Closed(enabled ? "enable installed content" : "disable installed content")) return;
+        try
+        {
+            var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
+            var moved = ContentProfileService.SetEnabled(PathUtility.Normalize(AddonDirectoryText.Text), titleId, selected, enabled);
+            TryDetectInstalledGame(showNotFound: false);
+            RefreshInstalledContent();
+            ShowStatus($"{(enabled ? "Enabled" : "Disabled")} {moved:N0} content item(s). Restart shadPS4 before playing.", false, success: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            ShowStatus($"Could not {(enabled ? "enable" : "disable")} the selected content: {ex.Message}", true);
+        }
     }
 
     private void OpenInstalledContentFolder(object sender, RoutedEventArgs e)
@@ -819,11 +1008,16 @@ public partial class MainWindow : Window
         var titleId = _detectedGame?.TitleId ?? (EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084");
         var contentRoot = Path.GetFullPath(Path.Combine(PathUtility.Normalize(AddonDirectoryText.Text), titleId))
             .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var disabledRoot = Path.GetFullPath(ContentProfileService.DisabledRoot(PathUtility.Normalize(AddonDirectoryText.Text), titleId))
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         var invalid = selected.FirstOrDefault(item =>
         {
             var folder = Path.GetFullPath(item.Folder).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var parent = Path.GetDirectoryName(folder);
             return string.Equals(folder, contentRoot, StringComparison.OrdinalIgnoreCase) ||
-                   !string.Equals(Path.GetDirectoryName(folder), contentRoot, StringComparison.OrdinalIgnoreCase);
+                   string.Equals(folder, disabledRoot, StringComparison.OrdinalIgnoreCase) ||
+                   (!string.Equals(parent, contentRoot, StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(parent, disabledRoot, StringComparison.OrdinalIgnoreCase));
         });
         if (invalid is not null)
         {
@@ -1778,6 +1972,11 @@ public partial class MainWindow : Window
             addonFolder, request.AddonSources.Count, validation.Warnings, preflight) { Owner = this };
         if (review.ShowDialog() != true) return;
 
+        await ExecuteInstallAsync(request, gameFolder);
+    }
+
+    private async Task ExecuteInstallAsync(InstallRequest request, string gameFolder)
+    {
         _installationLog?.Dispose();
         _installationLog = null;
         _lastErrorDetails = null;
@@ -1830,6 +2029,7 @@ public partial class MainWindow : Window
             _cancellation?.Dispose();
             _cancellation = null;
             SetInstalling(false);
+            RefreshInstallationRecovery();
         }
 
         if (completed)

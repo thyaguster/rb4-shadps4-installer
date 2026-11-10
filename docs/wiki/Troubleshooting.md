@@ -46,6 +46,8 @@ Standard user-selected shadPS4 installations keep their detected layout. The ins
 
 Read the status message and installation log. Keep the backup option enabled so the installer can roll back overwritten files. Ensure shadPS4 is closed and that the destination drive has enough free space.
 
+If the installer or computer stopped during file changes, reopen the installer and use the interrupted-install banner. **Resume safely** restores the recorded pre-install state and retries the saved sources. **Roll back** restores without retrying. **Clean staging** removes abandoned extracted files but deliberately keeps the rollback journal available.
+
 If a restore reports an integrity error, do not replace files from that backup manually. Use **Settings → Recovery backups → Verify integrity** to confirm the selected backup. A missing file, size mismatch, or SHA-256 mismatch means the retained backup is incomplete or has changed; choose another backup instead.
 
 If the problem persists, open a [GitHub issue](https://github.com/thyaguster/rb4-shadps4-installer/issues) with the installer version, game region, source type, and relevant log lines. Do not upload copyrighted game files or keys.

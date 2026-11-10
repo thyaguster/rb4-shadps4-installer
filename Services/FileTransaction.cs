@@ -5,6 +5,7 @@ namespace RB4ShadPS4Installer.Services;
 
 internal sealed class FileTransaction : IDisposable
 {
+    internal const string TransactionLogName = "transaction.jsonl";
     private readonly string _root;
     private readonly bool _persistent;
     private readonly string _titleId;
@@ -18,6 +19,7 @@ internal sealed class FileTransaction : IDisposable
         _titleId = titleId;
         _persistent = persistent;
         Directory.CreateDirectory(Path.Combine(_root, "files"));
+        WriteManifest("InProgress", _entries);
     }
 
     public void PrepareFile(string destination)
@@ -35,6 +37,7 @@ internal sealed class FileTransaction : IDisposable
             File.Copy(destination, backup, overwrite: false);
         }
         _entries.Add(new BackupEntry(destination, relativeBackup, existed));
+        AppendPreparedEntry(_entries[^1]);
     }
 
     public void Commit()
@@ -53,10 +56,7 @@ internal sealed class FileTransaction : IDisposable
                     BackupSha256 = Convert.ToHexString(SHA256.HashData(stream))
                 };
             }).ToArray();
-            var manifest = new BackupManifest(
-                2, _titleId, DateTimeOffset.Now, "Complete", protectedEntries);
-            File.WriteAllText(Path.Combine(_root, "manifest.json"),
-                JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
+            WriteManifest("Complete", protectedEntries);
         }
         else
         {
@@ -105,6 +105,27 @@ internal sealed class FileTransaction : IDisposable
         try { if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true); }
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
+    }
+
+    private void WriteManifest(string status, IReadOnlyList<BackupEntry> entries)
+    {
+        var manifest = new BackupManifest(2, _titleId, DateTimeOffset.Now, status, entries);
+        var path = Path.Combine(_root, "manifest.json");
+        var temporary = path + ".tmp";
+        File.WriteAllText(temporary,
+            JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }));
+        File.Move(temporary, path, overwrite: true);
+    }
+
+    private void AppendPreparedEntry(BackupEntry entry)
+    {
+        var path = Path.Combine(_root, TransactionLogName);
+        using var stream = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read,
+            16 * 1024, FileOptions.WriteThrough);
+        using var writer = new StreamWriter(stream);
+        writer.WriteLine(JsonSerializer.Serialize(entry));
+        writer.Flush();
+        stream.Flush(flushToDisk: true);
     }
 }
 

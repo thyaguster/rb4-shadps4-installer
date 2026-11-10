@@ -27,7 +27,7 @@ internal static class InstalledContentCatalogService
                              64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan))
             await using (var writer = new StreamWriter(stream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true)))
             {
-                await writer.WriteLineAsync("\"Game title ID\",\"Name\",\"Content ID\",\"Type\",\"Version\",\"Size (bytes)\",\"Folder\"");
+                await writer.WriteLineAsync("\"Game title ID\",\"Name\",\"Content ID\",\"Type\",\"State\",\"Version\",\"Size (bytes)\",\"Folder\"");
 
                 for (var index = 0; index < items.Count; index++)
                 {
@@ -39,7 +39,8 @@ internal static class InstalledContentCatalogService
                         titleId,
                         item.Name,
                         item.ContentId,
-                        item.Kind,
+                        item.IsCustomSong ? "Custom song / pack" : "DLC / unclassified",
+                        item.IsEnabled ? "Enabled" : "Disabled",
                         item.Version ?? string.Empty,
                         size.ToString(System.Globalization.CultureInfo.InvariantCulture),
                         item.Folder

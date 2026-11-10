@@ -4,7 +4,7 @@ namespace RB4ShadPS4Installer.Services;
 
 internal static class InstalledContentScanner
 {
-    public static IReadOnlyList<InstalledContentItem> Find(string addonDirectory, string titleId)
+    public static IReadOnlyList<InstalledContentItem> Find(string addonDirectory, string titleId, bool enabled = true)
     {
         var root = Path.Combine(addonDirectory, titleId);
         if (!Directory.Exists(root)) return [];
@@ -41,7 +41,7 @@ internal static class InstalledContentScanner
             catch (UnauthorizedAccessException) { }
             catch (InvalidDataException) { }
 
-            items.Add(new InstalledContentItem(name, contentId, directory, version));
+            items.Add(new InstalledContentItem(name, contentId, directory, version, enabled));
         }
 
         return items

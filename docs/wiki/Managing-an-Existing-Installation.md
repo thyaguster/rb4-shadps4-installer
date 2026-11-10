@@ -34,13 +34,21 @@ The manager recognizes the standard `Custom:` and `Custom Pack` titles generated
 
 Choose **Audit library** for a read-only validation pass. It reports missing, unreadable, or wrong-region `param.sfo` metadata, duplicate content IDs, unexpected package categories, empty folders, and linked directories that were deliberately skipped. The results window changes nothing and offers **Copy report** for troubleshooting.
 
-Choose **Export catalog** to save a UTF-8 CSV inventory of the complete installed library. The export includes the game title ID, content name and ID, type, version, recursive size in bytes, and folder. It always exports every detected item even when the on-screen list is filtered, and it safely quotes spreadsheet fields.
+Choose **Export catalog** to save a UTF-8 CSV inventory of the complete installed library. The export includes the game title ID, content name and ID, type, enabled/disabled state, version, recursive size in bytes, and folder. It always exports every detected item even when the on-screen list is filtered, and it safely quotes spreadsheet fields.
+
+## Content profiles
+
+Select installed items and choose **Disable selected** to stop shadPS4 loading them without deleting anything. Disabled folders remain beside the active add-on library in the installer's dedicated disabled-content area and can be restored with **Enable selected**.
+
+Enter a profile name and choose **Save current** to remember the exact enabled set. Applying a named profile enables its saved folders and disables the others transactionally; if any move fails, completed moves are reversed. Profiles store folder identities only—they do not duplicate content. Reinstalling a disabled item repairs it in place and keeps it disabled.
 
 To uninstall content, select one or more installed items and choose **Move selected to Recycle Bin**. The manager verifies that every selected folder is a direct child of the detected game's configured add-on directory, asks for confirmation, and uses the Windows Recycle Bin so accidental removals can be restored. It never removes the game folder or entire add-on root.
 
 ## Backups and rollback
 
 With backups enabled, overwritten files are preserved before installation. If an operation fails after changes begin, the installer attempts to restore the previous state and records details in the installation log.
+
+Before every destination write, the installer durably records the file and its prior state. After a process crash or power loss, the next launch offers **Resume safely**, **Roll back**, and **Clean staging**. Resume first restores the complete checkpoint and then retries the saved request from its original sources; it never continues blindly from a partially copied file.
 
 New recovery backups store the original size and SHA-256 checksum of every protected file. Open **Settings → Recovery backups** and choose **Verify integrity** to check a selected backup without changing the installation. Restore performs the same complete check before it modifies any destination, so a missing, truncated, or altered backup file stops the operation safely.
 

@@ -79,9 +79,8 @@ internal sealed class InstallerService
             : null;
 
         var stagingRoot = Path.Combine(request.GameLibrary, ".rb4-installer-staging", Guid.NewGuid().ToString("N"));
-        var transactionRoot = persistentBackupRoot ?? Path.Combine(
-            Path.GetTempPath(), "RB4ShadPS4Installer", "rollback", Guid.NewGuid().ToString("N"));
-        using var transaction = new FileTransaction(transactionRoot, request.TitleId, request.CreateBackup);
+        var recovery = InstallationRecoveryService.Begin(request, stagingRoot, persistentBackupRoot);
+        using var transaction = new FileTransaction(recovery.Root, request.TitleId, persistent: true);
         if (!string.IsNullOrWhiteSpace(request.BaseGameSource) && !PackageExtractor.IsPackage(request.BaseGameSource))
             operations.Add((request.BaseGameSource, baseDestination, "Installing RB4 base game"));
         if (!string.IsNullOrWhiteSpace(request.PatchSource) && !PackageExtractor.IsPackage(request.PatchSource))
@@ -92,6 +91,7 @@ internal sealed class InstallerService
         var skippedExistingContentCount = 0;
         try
         {
+            InstallationRecoveryService.UpdateStage(recovery, "Extracting and validating sources");
             var packageCount = (PackageExtractor.IsPackage(request.BaseGameSource) ? 1 : 0) +
                 (PackageExtractor.IsPackage(request.PatchSource) ? 1 : 0) +
                 request.AddonSources.Count(PackageExtractor.IsPackage);
@@ -139,8 +139,10 @@ internal sealed class InstallerService
                 else addonRoot = source;
 
                 var addon = ResolveAddon(addonRoot, request.TitleId);
-                var destination = Path.Combine(request.AddonDirectory, request.TitleId, addon.ContentId);
-                if (Directory.Exists(destination) && !request.ReplaceExistingContent)
+                var activeDestination = Path.Combine(request.AddonDirectory, request.TitleId, addon.ContentId);
+                var disabledDestination = Path.Combine(ContentProfileService.DisabledRoot(request.AddonDirectory, request.TitleId), addon.ContentId);
+                var destination = Directory.Exists(disabledDestination) ? disabledDestination : activeDestination;
+                if ((Directory.Exists(activeDestination) || Directory.Exists(disabledDestination)) && !request.ReplaceExistingContent)
                 {
                     skippedExistingContentCount++;
                     progress.Report(new InstallProgress(ProgressForSkipped(packageCount, index), $"Skipping already-installed add-on: {addon.ContentId}"));
@@ -179,6 +181,7 @@ internal sealed class InstallerService
             var allFiles = operations.Sum(operation => CountFiles(operation.Source));
             var copyStart = packageCount > 0 ? 62.0 : 5.0;
             long completed = 0;
+            InstallationRecoveryService.UpdateStage(recovery, "Applying file changes");
             foreach (var operation in operations)
             {
                 token.ThrowIfCancellationRequested();
@@ -207,6 +210,7 @@ internal sealed class InstallerService
                 }
             }
             transaction.Commit();
+            InstallationRecoveryService.Complete(recovery);
             progress.Report(new InstallProgress(100, "Installation complete"));
             return new InstallOutcome(installedContentCount, skippedExistingContentCount);
         }
