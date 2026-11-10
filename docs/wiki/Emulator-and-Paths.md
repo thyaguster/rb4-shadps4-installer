@@ -8,8 +8,10 @@ The folder containing the shadPS4 launcher executable.
 
 - **Select existing** keeps your current installation and remembers its location.
 - **Use managed** switches to the installer's Local AppData location.
-- **Download LlysiX RB4 build** installs or updates the recommended RB4-focused build in its own managed folder. It uses an isolated portable profile and does not replace an existing shadPS4 installation.
-- **Download latest official** installs the current official shadPS4 release separately.
+- **LlysiX RB4** installs or updates the recommended RB4-focused build in its own managed folder. It uses an isolated portable profile and does not replace an existing shadPS4 installation.
+- **Official shadPS4** installs the selected standard release separately.
+
+Choose **Load releases** to list recent Windows builds for both channels. **Latest automatically** resolves the newest suitable release each time; selecting an exact tag pins that version and the choice is remembered. The list shows publication dates and digest availability. LlysiX RB4 assets without a GitHub-published SHA-256 digest are excluded; official assets continue to verify a digest whenever one is published.
 
 ## User folder
 

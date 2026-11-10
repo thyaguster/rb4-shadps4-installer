@@ -37,6 +37,7 @@ jobs:
           dotnet run --project TestResults/ResumableDownloadSmoke/ResumableDownloadSmoke.csproj -c Release
           dotnet run --project TestResults/EmulatorRollbackSmoke/EmulatorRollbackSmoke.csproj -c Release
           dotnet run --project TestResults/RecoveryProfilesSmoke/RecoveryProfilesSmoke.csproj -c Release
+          dotnet run --project TestResults/CompatibilityReleasesSmoke/CompatibilityReleasesSmoke.csproj -c Release
           ./tools/test-duplicate-guard.ps1
 
       - name: Publish portable executable

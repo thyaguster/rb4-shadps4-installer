@@ -331,7 +331,7 @@
                                         <Button Content="Remove queued" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="RemoveAddonSources" />
                                     </StackPanel>
                                     <Grid Margin="0,12,0,0">
-                                        <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                        <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                         <StackPanel>
                                             <CheckBox x:Name="ContentBackupCheck" Content="Keep backup files after installation"
                                                       IsChecked="True" VerticalAlignment="Center" />
@@ -339,7 +339,9 @@
                                                       IsChecked="False" Foreground="#E7B36C" FontSize="11" Margin="0,7,0,0"
                                                       Visibility="Collapsed" Checked="ReplaceInstalledContentChanged" Unchecked="ReplaceInstalledContentChanged" />
                                         </StackPanel>
-                                        <Button x:Name="InstallQueuedContentButton" Grid.Column="1" Content="Review &amp; install queued content"
+                                        <Button Grid.Column="1" Content="Compatibility report" Style="{StaticResource SecondaryButton}"
+                                                Margin="8,0,0,0" Click="ShowCompatibilityReport" />
+                                        <Button x:Name="InstallQueuedContentButton" Grid.Column="2" Content="Review &amp; install queued content" Margin="8,0,0,0"
                                                 Style="{StaticResource PrimaryButton}" Click="InstallQueuedContent" />
                                     </Grid>
                                 </StackPanel>
@@ -438,13 +440,23 @@
                                 <Button Grid.Column="2" Content="Use managed" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="UseManagedShadPs4" />
                             </Grid>
                             <TextBlock x:Name="ShadPs4PathSourceText" Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,5,0,0" />
-                            <TextBlock Text="Managed emulator downloads" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,13,0,5" />
-                            <StackPanel Orientation="Horizontal">
-                                <Button x:Name="DownloadRb4ShadPs4Button" Content="Download / update LlysiX RB4 build" Style="{StaticResource PrimaryButton}" Click="DownloadRb4ShadPs4"
-                                        ToolTip="Recommended for Rock Band 4: checks LlysiX's releases for the latest combined Windows build and verifies its SHA-256 digest" />
-                                <Button x:Name="DownloadShadPs4Button" Content="Download latest official" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="DownloadShadPs4"
-                                        ToolTip="Downloads the newest official shadPS4 Windows x64 release to its own installer-managed folder" />
-                            </StackPanel>
+                            <Grid Margin="0,13,0,5">
+                                <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock Text="Managed emulator releases" Foreground="{StaticResource MutedTextBrush}" FontSize="12" VerticalAlignment="Center" />
+                                <Button x:Name="RefreshEmulatorReleasesButton" Grid.Column="1" Content="Load releases" Style="{StaticResource SecondaryButton}" Click="RefreshEmulatorReleases" />
+                            </Grid>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="125" /><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock Text="LlysiX RB4" VerticalAlignment="Center" FontWeight="SemiBold" />
+                                <ComboBox x:Name="Rb4EmulatorReleaseCombo" Grid.Column="1" DisplayMemberPath="Display" SelectionChanged="EmulatorReleaseSelectionChanged" />
+                                <Button x:Name="DownloadRb4ShadPs4Button" Grid.Column="2" Content="Install selected" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" Click="DownloadRb4ShadPs4" />
+                            </Grid>
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="125" /><ColumnDefinition /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock Text="Official shadPS4" VerticalAlignment="Center" FontWeight="SemiBold" />
+                                <ComboBox x:Name="OfficialEmulatorReleaseCombo" Grid.Column="1" DisplayMemberPath="Display" SelectionChanged="EmulatorReleaseSelectionChanged" />
+                                <Button x:Name="DownloadShadPs4Button" Grid.Column="2" Content="Install selected" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" Click="DownloadShadPs4" />
+                            </Grid>
                             <TextBlock Foreground="{StaticResource MutedTextBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
                                 LlysiX's custom build is the recommended RB4-focused option. The official channel provides the standard latest shadPS4 release. Both check GitHub for updates, verify available SHA-256 digests, and use separate managed folders.
                             </TextBlock>

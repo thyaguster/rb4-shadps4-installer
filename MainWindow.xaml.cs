@@ -37,6 +37,8 @@ public partial class MainWindow : Window
     private CancellationTokenSource? _healthCheckCancellation;
     private int _lastSkippedContentCount;
     private PendingInstallationRecovery? _pendingRecovery;
+    private string? _rb4EmulatorReleaseTag;
+    private string? _officialEmulatorReleaseTag;
 
     public MainWindow()
     {
@@ -69,6 +71,9 @@ public partial class MainWindow : Window
         LauncherShortcutCheck.IsChecked = saved?.MaintainLauncherShortcut == true;
         GameShortcutCheck.IsChecked = saved?.MaintainGameShortcut == true;
         AutoCheckForUpdatesCheck.IsChecked = saved?.AutoCheckForUpdates != false;
+        _rb4EmulatorReleaseTag = saved?.Rb4EmulatorReleaseTag;
+        _officialEmulatorReleaseTag = saved?.OfficialEmulatorReleaseTag;
+        InitializeEmulatorReleaseSelectors();
         var appEdition = AppUpdateService.CurrentEdition == AppEdition.Portable ? "Portable" : "Installed";
         AppUpdateCurrentText.Text = $"Current version {AppUpdateService.CurrentVersion.ToString(3)}  •  {appEdition} edition";
         GameLibraryText.Text = PathUtility.Normalize(saved?.GameLibrary ?? Path.Combine(
@@ -1717,6 +1722,78 @@ public partial class MainWindow : Window
         await DownloadManagedShadPs4Async(rb4Compatible: true);
     }
 
+    private void InitializeEmulatorReleaseSelectors()
+    {
+        var automaticRb4 = new EmulatorReleaseSelection(_rb4EmulatorReleaseTag is null
+            ? "Latest automatically (recommended)" : $"Pinned {_rb4EmulatorReleaseTag} • Load releases to install", null);
+        var automaticOfficial = new EmulatorReleaseSelection(_officialEmulatorReleaseTag is null
+            ? "Latest automatically" : $"Pinned {_officialEmulatorReleaseTag} • Load releases to install", null);
+        Rb4EmulatorReleaseCombo.ItemsSource = new[] { automaticRb4 };
+        OfficialEmulatorReleaseCombo.ItemsSource = new[] { automaticOfficial };
+        Rb4EmulatorReleaseCombo.SelectedIndex = 0;
+        OfficialEmulatorReleaseCombo.SelectedIndex = 0;
+        UpdateEmulatorDownloadButtons();
+    }
+
+    private async void RefreshEmulatorReleases(object sender, RoutedEventArgs e)
+    {
+        var cancellation = BeginDownloadOperation("Cancel release lookup");
+        if (cancellation is null) return;
+        RefreshEmulatorReleasesButton.IsEnabled = false;
+        try
+        {
+            ShowStatus("Loading LlysiX and official shadPS4 releases from GitHub", false);
+            var rb4Task = OfficialDownloads.GetReleaseOptionsAsync(EmulatorReleaseChannel.LlysixRb4, cancellation.Token);
+            var officialTask = OfficialDownloads.GetReleaseOptionsAsync(EmulatorReleaseChannel.Official, cancellation.Token);
+            await Task.WhenAll(rb4Task, officialTask);
+            SetReleaseChoices(Rb4EmulatorReleaseCombo, rb4Task.Result, _rb4EmulatorReleaseTag, "Latest automatically (recommended)");
+            SetReleaseChoices(OfficialEmulatorReleaseCombo, officialTask.Result, _officialEmulatorReleaseTag, "Latest automatically");
+            ShowStatus($"Loaded {rb4Task.Result.Count:N0} LlysiX and {officialTask.Result.Count:N0} official emulator release(s). Select Latest automatically or pin an exact tag.", false, success: true);
+        }
+        catch (OperationCanceledException)
+        {
+            ShowStatus("Emulator release lookup cancelled.", false);
+        }
+        catch (Exception ex)
+        {
+            ShowStatus("Could not load emulator releases: " + ex.Message, true);
+        }
+        finally
+        {
+            RefreshEmulatorReleasesButton.IsEnabled = true;
+            EndDownloadOperation(cancellation);
+        }
+    }
+
+    private static void SetReleaseChoices(ComboBox combo, IReadOnlyList<EmulatorReleaseOption> releases, string? selectedTag, string automaticLabel)
+    {
+        var choices = new[] { new EmulatorReleaseSelection(automaticLabel, null) }
+            .Concat(releases.Select(release => new EmulatorReleaseSelection(release.Display, release))).ToArray();
+        combo.ItemsSource = choices;
+        combo.SelectedItem = choices.FirstOrDefault(choice => choice.Option?.Tag.Equals(selectedTag, StringComparison.OrdinalIgnoreCase) == true) ?? choices[0];
+    }
+
+    private void EmulatorReleaseSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!IsInitialized) return;
+        _rb4EmulatorReleaseTag = (Rb4EmulatorReleaseCombo.SelectedItem as EmulatorReleaseSelection)?.Option?.Tag;
+        _officialEmulatorReleaseTag = (OfficialEmulatorReleaseCombo.SelectedItem as EmulatorReleaseSelection)?.Option?.Tag;
+        UpdateEmulatorDownloadButtons();
+        SavePreferences();
+    }
+
+    private void UpdateEmulatorDownloadButtons()
+    {
+        if (DownloadRb4ShadPs4Button is null) return;
+        DownloadRb4ShadPs4Button.IsEnabled = _downloadCancellation is null &&
+            (_rb4EmulatorReleaseTag is null || (Rb4EmulatorReleaseCombo.SelectedItem as EmulatorReleaseSelection)?.Option is not null);
+        DownloadShadPs4Button.IsEnabled = _downloadCancellation is null &&
+            (_officialEmulatorReleaseTag is null || (OfficialEmulatorReleaseCombo.SelectedItem as EmulatorReleaseSelection)?.Option is not null);
+    }
+
+    private EmulatorReleaseOption? SelectedEmulatorRelease(bool rb4Compatible) =>
+        ((rb4Compatible ? Rb4EmulatorReleaseCombo : OfficialEmulatorReleaseCombo).SelectedItem as EmulatorReleaseSelection)?.Option;
+
     private EmulatorRollbackStatus GetEmulatorRollbackStatus() => EmulatorRollbackService.Inspect(
         PathUtility.Normalize(ShadPs4InstallText.Text),
         OfficialDownloads.DefaultShadPs4Directory,
@@ -1826,7 +1903,7 @@ public partial class MainWindow : Window
             Rb4ShadPs4DownloadResult? rb4Result = null;
             if (rb4Compatible)
             {
-                rb4Result = await OfficialDownloads.DownloadRb4ShadPs4Async(destination, progress, cancellation.Token);
+                rb4Result = await OfficialDownloads.DownloadRb4ShadPs4Async(destination, SelectedEmulatorRelease(true), progress, cancellation.Token);
                 ShadPs4InstallText.Text = rb4Result.Directory;
                 var profile = await ManagedEmulatorProfile.PreparePortableUserAsync(
                     rb4Result.Directory, previousUserDirectory, progress, cancellation.Token);
@@ -1835,7 +1912,7 @@ public partial class MainWindow : Window
             }
             else
             {
-                ShadPs4InstallText.Text = await OfficialDownloads.DownloadShadPs4Async(destination, progress, cancellation.Token);
+                ShadPs4InstallText.Text = await OfficialDownloads.DownloadShadPs4Async(destination, SelectedEmulatorRelease(false), progress, cancellation.Token);
                 if (_isFirstRun)
                 {
                     UserDirectoryText.Text = ShadPs4Locator.InferUserDirectory(ShadPs4InstallText.Text);
@@ -1844,8 +1921,9 @@ public partial class MainWindow : Window
             }
             SavePreferences();
             RefreshDesktopShortcuts(showSuccess: false);
+            var selectedVersion = SelectedEmulatorRelease(rb4Compatible)?.Tag;
             var message = !rb4Compatible
-                ? "Latest official shadPS4 downloaded and extracted successfully."
+                ? $"Official shadPS4 {(selectedVersion ?? "latest")} downloaded and extracted successfully."
                 : rb4Result!.Downloaded
                     ? $"RB4-compatible shadPS4 {rb4Result.Version} downloaded, SHA-256 verified, and installed successfully."
                     : $"RB4-compatible shadPS4 is already up to date ({rb4Result.Version}).";
@@ -1927,6 +2005,18 @@ public partial class MainWindow : Window
             (_installedContentVisible ? ContentBackupCheck.IsChecked : BackupCheck.IsChecked) == true,
             ManagedEmulatorProfile.Detect(ShadPs4InstallText.Text),
             ReplaceInstalledContentCheck.IsChecked == true);
+    }
+
+    private void ShowCompatibilityReport(object sender, RoutedEventArgs e)
+    {
+        var request = BuildRequest();
+        var report = CompatibilityReportService.Analyze(request, _installedContent, _detectedGame?.DeluxeInstalled == true);
+        if (report.Items.Count == 0)
+        {
+            ShowStatus("Queue a game, update, Deluxe, DLC, or custom-song source before opening the compatibility report.", true);
+            return;
+        }
+        new CompatibilityReportWindow(report) { Owner = this }.ShowDialog();
     }
 
     private static string? EmptyToNull(string value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
@@ -2086,8 +2176,7 @@ public partial class MainWindow : Window
         if (!ReferenceEquals(_downloadCancellation, cancellation)) return;
         cancellation.Dispose();
         _downloadCancellation = null;
-        DownloadShadPs4Button.IsEnabled = true;
-        DownloadRb4ShadPs4Button.IsEnabled = true;
+        UpdateEmulatorDownloadButtons();
         DownloadDeluxeButton.IsEnabled = true;
         DownloadExtractorButton.IsEnabled = true;
         CheckForUpdatesButton.IsEnabled = !_checkingForAppUpdates;
@@ -2258,7 +2347,9 @@ public partial class MainWindow : Window
                 EuTitleRadio.IsChecked == true ? "CUSA02901" : "CUSA02084",
                 LauncherShortcutCheck.IsChecked == true,
                 GameShortcutCheck.IsChecked == true,
-                AutoCheckForUpdatesCheck.IsChecked == true));
+                AutoCheckForUpdatesCheck.IsChecked == true,
+                _rb4EmulatorReleaseTag,
+                _officialEmulatorReleaseTag));
             if (ManagedEmulatorProfile.IsLlysixRb4(ShadPs4InstallText.Text))
                 ShadPs4ManagedConfig.SetPaths(
                     UserDirectoryText.Text,

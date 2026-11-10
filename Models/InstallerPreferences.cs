@@ -9,7 +9,9 @@ public sealed record InstallerPreferences(
     string? TitleId,
     bool MaintainLauncherShortcut = false,
     bool MaintainGameShortcut = false,
-    bool AutoCheckForUpdates = true);
+    bool AutoCheckForUpdates = true,
+    string? Rb4EmulatorReleaseTag = null,
+    string? OfficialEmulatorReleaseTag = null);
 
 public sealed record InstalledGame(
     string TitleId,

@@ -36,8 +36,8 @@
 |---|---|
 | **Game setup** | Base game and updates from user-provided PKGs or extracted folders |
 | **RB4 Deluxe** | Download, install, detect, repair, and update |
-| **Extra content** | Import, search, audit, catalog, disable/enable, and organize DLC/custom songs into named profiles without deleting files |
-| **shadPS4** | Isolated LlysiX RB4 profile or a user-selected existing installation |
+| **Extra content** | Compatibility reports, import, search, audit, catalog, disable/enable, and named DLC/custom-song profiles |
+| **shadPS4** | Latest or pinned LlysiX/official releases with verified downloads, isolated profiles, and rollback |
 | **Firmware setup** | Validates and imports decrypted `.sprx` modules plus dumped `font` and `font2` folders from the user's own PS4 |
 | **Existing installs** | Detects region, game version, Deluxe, and installed add-ons |
 | **Setup health** | Runs a cancellable background check with live stage/content-scan progress for emulator/profile alignment, RB4 2.21, RB4DX, installed-content integrity, modules, fonts, disk space, and the latest launch log; exports redacted support bundles |
@@ -64,6 +64,8 @@ Custom-song imports are unlocked after RB4DX is detected. The installer keeps it
 The Content page can disable individual items without deleting them and save the current enabled set as a named profile. Applying a profile switches folders transactionally and keeps disabled content on the same drive for quick reactivation.
 
 Queued content is compared with the installed library. Recognized duplicates are marked and skipped by default; PKGs that can only be identified after extraction receive the same protection during installation. Enable deliberate reinstall only when repairing or replacing existing content.
+
+Choose **Compatibility report** for a source-by-source view of region, content type, identity, duplicate state, RB4DX requirement, and metadata confidence. Extracted folders use verified `param.sfo` values; encrypted PKGs clearly distinguish filename evidence from metadata that will be enforced after extraction.
 
 If Windows or the installer closes during file changes, the next launch shows an interrupted-install banner. **Resume safely** restores the recorded checkpoint before retrying, **Roll back** restores and stops, and **Clean staging** reclaims extracted temporary files without discarding rollback data.
 
@@ -98,6 +100,8 @@ For detailed instructions, path explanations, maintenance workflows, and trouble
 When upgrading an older installer-managed LlysiX setup, configuration, saves, keys, input profiles, sysmodules, and RB4DX data are copied into the isolated profile. Existing files under `%APPDATA%\shadPS4` are not deleted. The game library remains in its original location and is not duplicated.
 
 Managed updates retain the previous LlysiX or official emulator build. Settings shows both versions and provides **Restore previous build**; restoring swaps them so the action can be undone. LlysiX rollbacks preserve the newest portable user profile, including settings and saves.
+
+Use **Load releases** in Settings to choose **Latest automatically** or pin an exact LlysiX/official tag. Pinned selections are remembered. The list shows release dates and whether GitHub published a SHA-256 digest; RB4-focused builds without a digest are not selectable.
 
 ## Firmware modules
 
